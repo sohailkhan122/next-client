@@ -220,6 +220,11 @@ export default function LoginPage() {
                   size="large"
                 />
               </Form.Item>
+              <div style={{ textAlign: 'right', marginTop: -10, marginBottom: 8 }}>
+                <Link href="/forgot-password" className="switch-link" style={{ fontSize: 13 }}>
+                  Forgot password?
+                </Link>
+              </div>
             </motion.div>
 
             <motion.div variants={itemVariants} style={{ marginTop: 24 }}>

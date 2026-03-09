@@ -112,3 +112,22 @@ export const getAllJobs = async () => {
     throw err.response?.data || err.message;
   }
 };
+
+/**
+ * POST /auth/forgot-password
+ * Sends a password-reset email to the provided address.
+ */
+export async function apiForgotPassword(email: string): Promise<{ message: string }> {
+  const { data } = await axiosInstance.post<{ message: string }>('/auth/forgot-password', { email });
+  return data;
+}
+
+/**
+ * POST /auth/reset-password
+ * Resets the user's password using the token from the email link.
+ */
+export async function apiResetPassword(token: string, password: string): Promise<{ message: string }> {
+  const { data } = await axiosInstance.post<{ message: string }>('/auth/reset-password', { token, password });
+  return data;
+}
+
