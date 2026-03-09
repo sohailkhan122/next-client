@@ -1,7 +1,10 @@
 import axios from 'axios';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
+// const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const BASE_URL =
+  typeof window !== "undefined"
+    ? "/proxy" // browser → same-domain proxy → cookies work in middleware
+    : process.env.NEXT_PUBLIC_API_URL;
 // ─── Axios instance ───────────────────────────────────────────────────────────
 // The backend sets the JWT in an httpOnly cookie.
 // withCredentials: true tells the browser to send that cookie on every request.
