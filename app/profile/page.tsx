@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import {
   Avatar,
   Button,
@@ -66,6 +66,14 @@ const stagger = {
 };
 
 export default function ProfilePage() {
+  return (
+    <Suspense fallback={<div>Loading…</div>}>
+      <ProfileContent />
+    </Suspense>
+  );
+}
+
+function ProfileContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [profile, setProfile] = useState<ProfileData>(INITIAL_PROFILE);
