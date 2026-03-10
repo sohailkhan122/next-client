@@ -6,11 +6,13 @@ import {
   MailOutlined,
   SolutionOutlined,
   ArrowRightOutlined,
+  CodeSandboxCircleFilled,
 } from '@ant-design/icons';
 import { motion, type Variants } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { apiLogin } from '../lib/authApi';
 import Link from 'next/link';
+import { Console } from 'console';
 
 const stats = [
   { value: '50K+', label: 'Active Jobs' },
@@ -84,16 +86,16 @@ export default function LoginPage() {
         }
       }
 
-    } catch (err: unknown) {
-  const axiosErr = err as {
-    response?: { status?: number; data?: { message?: string } };
-  };
+    } catch (err: any) {
+  const message = err.response?.data?.message;
+  console.log("Login error:", err.response);
+ 
 
-  const serverMessage = axiosErr?.response?.data?.message;
+  // const serverMessage = axiosErr?.response?.data?.message;
 
-  console.log("Login error:", serverMessage);
+  // console.log("Login error:",axiosErr.response );
 
-  setError(serverMessage || "Something went wrong");
+  setError(message || "Something went wrong");
 } finally {
       setLoading(false);
     }
@@ -221,7 +223,7 @@ export default function LoginPage() {
                 />
               </Form.Item>
               <div style={{ textAlign: 'right', marginTop: -10, marginBottom: 8 }}>
-                <Link href="/forgot-password" className="switch-link" style={{ fontSize: 13 }}>
+                <Link href="/forgot-password" replace className="switch-link" style={{ fontSize: 13 }}>
                   Forgot password?
                 </Link>
               </div>

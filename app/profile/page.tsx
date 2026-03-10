@@ -72,7 +72,7 @@ export default function ProfilePage() {
   const [editOpen, setEditOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form] = Form.useForm();
-  const [messageApi, contextHolder] = message.useMessage();
+  // const [messageApi, contextHolder] = message.useMessage();
 
   // Auto-open edit modal if ?edit=true
   useEffect(() => {
@@ -92,7 +92,7 @@ export default function ProfilePage() {
     setProfile((prev) => ({ ...prev, ...values }));
     setSaving(false);
     setEditOpen(false);
-    messageApi.success('Profile updated successfully ✨');
+    message.success('Profile updated successfully ✨');
   };
 
   const InfoRow = ({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) => (
@@ -107,7 +107,6 @@ export default function ProfilePage() {
 
   return (
     <div className="page-bg">
-      {contextHolder}
       <Navbar title="Profile" />
 
       <div className="page-content">

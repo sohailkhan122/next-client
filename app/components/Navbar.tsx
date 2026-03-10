@@ -25,7 +25,7 @@ export default function Navbar({ title }: { title?: string }) {
       key: 'view-profile',
       icon: <IdcardOutlined />,
       label: 'View Profile',
-      onClick: () => router.push('/profile'),
+      onClick: () => router.replace('/profile'),
     },
     // {
     //   key: 'edit-profile',
