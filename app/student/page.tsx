@@ -28,6 +28,7 @@ import { useRouter } from 'next/navigation';
 import Navbar from '../components/Navbar';
 import { apiGetMe } from '../lib/authApi';
 import { apiGetAllJobs, type Job as ApiJob } from '../lib/jobsApi';
+import { apiGetMyStudentDetail } from '../lib/studentDetailApi';
 
 const { Option } = Select;
 
@@ -42,7 +43,39 @@ interface Job {
   type: string;
   category: string;
   applicants: number;
+  relevanceScore: number;
 }
+
+const normalizeText = (value: string) => value.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').trim();
+
+const tokenize = (value: string) =>
+  normalizeText(value)
+    .split(/\s+/)
+    .filter((token) => token.length > 2);
+
+const computeRelevanceScore = (job: Pick<Job, 'title' | 'category'>, requiredJob: string, requiredField: string) => {
+  const title = normalizeText(job.title);
+  const category = normalizeText(job.category);
+  const requiredJobNorm = normalizeText(requiredJob);
+  const fieldNorm = normalizeText(requiredField);
+
+  let score = 0;
+
+  if (requiredJobNorm && title.includes(requiredJobNorm)) {
+    score += 6;
+  }
+  if (fieldNorm && (title.includes(fieldNorm) || category.includes(fieldNorm))) {
+    score += 4;
+  }
+
+  const keywords = [...new Set([...tokenize(requiredJob), ...tokenize(requiredField)])];
+  for (const word of keywords) {
+    if (title.includes(word)) score += 2;
+    if (category.includes(word)) score += 1;
+  }
+
+  return score;
+};
 
 const typeColors: Record<string, string> = {
   'Full-time': 'green',
@@ -70,31 +103,56 @@ export default function StudentPage() {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [filtered, setFiltered] = useState<Job[]>([]);
+  const [requiredJob, setRequiredJob] = useState('');
+  const [requiredField, setRequiredField] = useState('');
 
   useEffect(() => {
     const load = async () => {
+      let preferredJob = '';
+      let preferredField = '';
+
       try {
         const me = await apiGetMe();
         setProfileCompleted(Boolean(me.profileCompleted));
+        try {
+          const detail = await apiGetMyStudentDetail();
+          preferredJob = (detail.requiredJob ?? '').trim();
+          preferredField = (detail.fieldOfStudy ?? '').trim();
+          setRequiredJob(preferredJob);
+          setRequiredField(preferredField);
+        } catch {
+          setRequiredJob('');
+          setRequiredField('');
+        }
       } catch {
         router.replace('/login');
         return;
       }
       try {
         const apiJobs: ApiJob[] = await apiGetAllJobs();
-        const mapped: Job[] = apiJobs.map((j) => ({
-          id: j._id,
-          title: j.title,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          companyName: (j.companyId as any)?.name ?? (j.companyId as any)?.company ?? 'Company',
-          location: j.location,
-          salary: j.salary,
-          experience: j.experience,
-          deadline: j.deadline.substring(0, 10),
-          type: j.type,
-          category: j.category,
-          applicants: j.applicants?.length ?? 0,
-        }));
+        const mapped: Job[] = apiJobs
+          .map((j) => {
+            const job: Job = {
+              id: j._id,
+              title: j.title,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              companyName: (j.companyId as any)?.name ?? (j.companyId as any)?.company ?? 'Company',
+              location: j.location,
+              salary: j.salary,
+              experience: j.experience,
+              deadline: j.deadline.substring(0, 10),
+              type: j.type,
+              category: j.category,
+              applicants: j.applicants?.length ?? 0,
+              relevanceScore: computeRelevanceScore(
+                { title: j.title, category: j.category },
+                preferredJob,
+                preferredField,
+              ),
+            };
+            return job;
+          })
+          .sort((a, b) => b.relevanceScore - a.relevanceScore);
         setAllJobs(mapped);
         setFiltered(mapped);
       } catch {
@@ -109,6 +167,16 @@ export default function StudentPage() {
 
   useEffect(() => {
     let result = [...allJobs];
+    const hasStudentPreference = Boolean(requiredJob.trim() || requiredField.trim());
+    const isDefaultView = !search.trim() && typeFilter === 'all' && categoryFilter === 'all';
+
+    if (isDefaultView && hasStudentPreference) {
+      const relevantOnly = result.filter((job) => job.relevanceScore > 0);
+      if (relevantOnly.length > 0) {
+        result = relevantOnly;
+      }
+    }
+
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter(
@@ -120,8 +188,9 @@ export default function StudentPage() {
     }
     if (typeFilter !== 'all') result = result.filter((j) => j.type === typeFilter);
     if (categoryFilter !== 'all') result = result.filter((j) => j.category === categoryFilter);
+    result.sort((a, b) => b.relevanceScore - a.relevanceScore);
     setFiltered(result);
-  }, [search, typeFilter, categoryFilter, allJobs]);
+  }, [search, typeFilter, categoryFilter, allJobs, requiredJob, requiredField]);
 
   const categories = Array.from(new Set(allJobs.map((j) => j.category)));
 
@@ -215,6 +284,11 @@ export default function StudentPage() {
         >
           <FilterOutlined style={{ marginRight: 6 }} />
           Showing <strong>{filtered.length}</strong> of <strong>{allJobs.length}</strong> jobs
+          {!search.trim() && typeFilter === 'all' && categoryFilter === 'all' && (requiredJob || requiredField) && (
+            <span style={{ marginLeft: 8, color: '#4f46e5', fontWeight: 600 }}>
+              (Relevant to your profile)
+            </span>
+          )}
         </motion.div>
 
         {/* Job Cards */}
@@ -263,9 +337,16 @@ export default function StudentPage() {
                         >
                           {job.companyName.charAt(0)}
                         </div>
-                        <Tag color={typeColors[job.type] || 'default'} style={{ borderRadius: 20, fontWeight: 600 }}>
-                          {job.type}
-                        </Tag>
+                        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                          {job.relevanceScore > 0 && (
+                            <Tag color="geekblue" style={{ borderRadius: 20, fontWeight: 700 }}>
+                              Relevant
+                            </Tag>
+                          )}
+                          <Tag color={typeColors[job.type] || 'default'} style={{ borderRadius: 20, fontWeight: 600 }}>
+                            {job.type}
+                          </Tag>
+                        </div>
                       </div>
 
                       <div style={{ fontSize: 17, fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>
