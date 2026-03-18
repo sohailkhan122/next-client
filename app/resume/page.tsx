@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, Suspense } from 'react';
 import { Spin } from 'antd';
 import {
   MailOutlined,
@@ -55,7 +55,7 @@ const SKILL_COLORS = [
   'bg-rose-100 text-rose-700',
 ];
 
-export default function ResumePage() {
+function ResumePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const resumeRef = useRef<HTMLDivElement>(null);
@@ -441,6 +441,20 @@ export default function ResumePage() {
         </div>
       </div>
     </>
+  );
+}
+
+export default function ResumePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-slate-50">
+          <Spin size="large" />
+        </div>
+      }
+    >
+      <ResumePageContent />
+    </Suspense>
   );
 }
 
