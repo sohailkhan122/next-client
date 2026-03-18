@@ -1,14 +1,21 @@
 'use client';
 
-import React from 'react';
-import { Avatar, Dropdown, message, Tooltip } from 'antd';
-import { UserOutlined, SolutionOutlined, LogoutOutlined, IdcardOutlined, EditOutlined } from '@ant-design/icons';
+import { useEffect, useState } from 'react';
+import { Avatar, Badge, Dropdown, message, Tooltip } from 'antd';
+import { UserOutlined, SolutionOutlined, LogoutOutlined, IdcardOutlined, MessageOutlined } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { apiLogout } from '../lib/authApi';
+import { apiLogout, apiGetMe } from '../lib/authApi';
 
 export default function Navbar({ title }: { title?: string }) {
   const router = useRouter();
+  const [role, setRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    apiGetMe()
+      .then((me) => setRole(me.role))
+      .catch(() => setRole(null));
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -21,19 +28,16 @@ export default function Navbar({ title }: { title?: string }) {
   };
 
   const menuItems = [
-    {
-      key: 'view-profile',
-      icon: <IdcardOutlined />,
-      label: 'View Profile',
-      onClick: () => router.replace('/profile'),
-    },
-    // {
-    //   key: 'edit-profile',
-    //   icon: <EditOutlined />,
-    //   label: 'Edit Profile',
-    //   onClick: () => router.push('/profile?edit=true'),
-    // },
-    // { type: 'divider' as const },
+    ...(role !== 'admin'
+      ? [
+        {
+          key: 'view-profile',
+          icon: <IdcardOutlined />,
+          label: 'View Profile',
+          onClick: () => router.push('/profile'),
+        },
+      ]
+      : []),
     {
       key: 'logout',
       icon: <LogoutOutlined />,
@@ -63,6 +67,18 @@ export default function Navbar({ title }: { title?: string }) {
 
       {/* Right Side */}
       <div className="navbar-right">
+        {role && role !== 'admin' && (
+          <Tooltip title="Messages">
+            <div
+              onClick={() => router.push('/messages')}
+              style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px 8px', borderRadius: 8 }}
+            >
+              <Badge dot>
+                <MessageOutlined style={{ fontSize: 20, color: '#6366f1' }} />
+              </Badge>
+            </div>
+          </Tooltip>
+        )}
         <Dropdown menu={{ items: menuItems }} placement="bottomRight" trigger={['click']}>
           <Tooltip >
             <div className="navbar-avatar" style={{ cursor: 'pointer' }}>

@@ -79,11 +79,7 @@ export default function LoginPage() {
           router.replace("/company-details");
         }
       } else if (user.role === "student") {
-        if (user.profileCompleted) {
-          router.replace("/student");
-        } else {
-          router.replace("/student-details");
-        }
+        router.replace("/student");
       }
 
     } catch (err: any) {

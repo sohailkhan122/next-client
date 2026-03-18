@@ -23,7 +23,7 @@ import {
   BankOutlined,
   UserOutlined,
   ClockCircleOutlined,
-  FileTextOutlined, 
+  FileTextOutlined,
 } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 // import { useAuth } from '../contexts/AuthContext';
@@ -76,9 +76,9 @@ export default function AdminDashboard() {
     // if (!loading) {
     //   if (!user) { router.push('/login'); return; }
     //   if (user.role !== 'admin') { router.push('/login'); return; }
-      fetchData();
-    
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchData();
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const approveUser = async (id: string) => {
@@ -220,7 +220,9 @@ export default function AdminDashboard() {
                   <Card
                     className="stat-card-new"
                     style={{ borderRadius: 16, border: '1px solid #f1f5f9' }}
-                    bodyStyle={{ padding: '20px 24px' }}
+                    styles={{
+                      body: { padding: '20px 24px' }
+                    }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                       <div
@@ -266,7 +268,9 @@ export default function AdminDashboard() {
                 </div>
               }
               style={{ borderRadius: 16, border: '1px solid #fde68a', marginBottom: 24 }}
-              bodyStyle={{ padding: 0 }}
+              styles={{
+                body: { padding: 0 }
+              }}
             >
               <Table
                 dataSource={pending}
@@ -292,7 +296,9 @@ export default function AdminDashboard() {
               </div>
             }
             style={{ borderRadius: 16, border: '1px solid #f1f5f9' }}
-            bodyStyle={{ padding: 0 }}
+            styles={{
+              body: { padding: 0 }
+            }}
           >
             {users.length === 0 ? (
               <Empty style={{ padding: 40 }} description="No users found" />
@@ -321,7 +327,9 @@ export default function AdminDashboard() {
               </div>
             }
             style={{ borderRadius: 16, border: '1px solid #f1f5f9', marginTop: 24 }}
-            bodyStyle={{ padding: 0 }}
+            styles={{
+              body: { padding: 0 }
+            }}
           >
             <Table
               dataSource={jobs}

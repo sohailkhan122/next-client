@@ -10,6 +10,7 @@ import {
   Input,
   Row,
   Select,
+  Spin,
   Tag,
 } from 'antd';
 import {
@@ -20,15 +21,18 @@ import {
   ClockCircleOutlined,
   EyeOutlined,
   FilterOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import Navbar from '../components/Navbar';
+import { apiGetMe } from '../lib/authApi';
+import { apiGetAllJobs, type Job as ApiJob } from '../lib/jobsApi';
 
 const { Option } = Select;
 
 interface Job {
-  id: number;
+  id: string;
   title: string;
   companyName: string;
   location: string;
@@ -39,105 +43,6 @@ interface Job {
   category: string;
   applicants: number;
 }
-
-const JOBS: Job[] = [
-  {
-    id: 1,
-    title: 'Frontend Developer',
-    companyName: 'TechCorp',
-    location: 'New York, USA',
-    salary: '$80,000 - $100,000',
-    experience: '2-4 years',
-    deadline: '2026-04-15',
-    type: 'Full-time',
-    category: 'Engineering',
-    applicants: 42,
-  },
-  {
-    id: 2,
-    title: 'Backend Engineer',
-    companyName: 'DataSystems',
-    location: 'San Francisco, USA',
-    salary: '$90,000 - $120,000',
-    experience: '3-5 years',
-    deadline: '2026-04-20',
-    type: 'Full-time',
-    category: 'Engineering',
-    applicants: 35,
-  },
-  {
-    id: 3,
-    title: 'UI/UX Designer',
-    companyName: 'CreativeHub',
-    location: 'Remote',
-    salary: '$60,000 - $80,000',
-    experience: '1-3 years',
-    deadline: '2026-04-10',
-    type: 'Remote',
-    category: 'Design',
-    applicants: 28,
-  },
-  {
-    id: 4,
-    title: 'Data Analyst',
-    companyName: 'InsightCo',
-    location: 'Chicago, USA',
-    salary: '$70,000 - $90,000',
-    experience: '2-3 years',
-    deadline: '2026-04-25',
-    type: 'Full-time',
-    category: 'Analytics',
-    applicants: 19,
-  },
-  {
-    id: 5,
-    title: 'Marketing Intern',
-    companyName: 'BrandBoost',
-    location: 'Austin, USA',
-    salary: '$20/hr',
-    experience: '0-1 year',
-    deadline: '2026-03-30',
-    type: 'Internship',
-    category: 'Marketing',
-    applicants: 55,
-  },
-  {
-    id: 6,
-    title: 'DevOps Engineer',
-    companyName: 'CloudBase',
-    location: 'Seattle, USA',
-    salary: '$100,000 - $130,000',
-    experience: '4-6 years',
-    deadline: '2026-05-01',
-    type: 'Contract',
-    category: 'Engineering',
-    applicants: 14,
-  },
-  {
-    id: 7,
-    title: 'Product Manager',
-    companyName: 'LaunchPad',
-    location: 'Remote',
-    salary: '$95,000 - $115,000',
-    experience: '3-6 years',
-    deadline: '2026-04-18',
-    type: 'Remote',
-    category: 'Management',
-    applicants: 31,
-  },
-  {
-    id: 8,
-    title: 'React Native Developer',
-    companyName: 'MobileFirst',
-    location: 'Boston, USA',
-    salary: '$85,000 - $105,000',
-    experience: '2-4 years',
-    deadline: '2026-04-22',
-    type: 'Part-time',
-    category: 'Engineering',
-    applicants: 23,
-  },
-];
 
 const typeColors: Record<string, string> = {
   'Full-time': 'green',
@@ -158,13 +63,52 @@ const fadeUp = {
 
 export default function StudentPage() {
   const router = useRouter();
+  const [allJobs, setAllJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [profileCompleted, setProfileCompleted] = useState(false);
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
-  const [filtered, setFiltered] = useState<Job[]>(JOBS);
+  const [filtered, setFiltered] = useState<Job[]>([]);
 
   useEffect(() => {
-    let result = [...JOBS];
+    const load = async () => {
+      try {
+        const me = await apiGetMe();
+        setProfileCompleted(Boolean(me.profileCompleted));
+      } catch {
+        router.replace('/login');
+        return;
+      }
+      try {
+        const apiJobs: ApiJob[] = await apiGetAllJobs();
+        const mapped: Job[] = apiJobs.map((j) => ({
+          id: j._id,
+          title: j.title,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          companyName: (j.companyId as any)?.name ?? (j.companyId as any)?.company ?? 'Company',
+          location: j.location,
+          salary: j.salary,
+          experience: j.experience,
+          deadline: j.deadline.substring(0, 10),
+          type: j.type,
+          category: j.category,
+          applicants: j.applicants?.length ?? 0,
+        }));
+        setAllJobs(mapped);
+        setFiltered(mapped);
+      } catch {
+        setAllJobs([]);
+        setFiltered([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [router]);
+
+  useEffect(() => {
+    let result = [...allJobs];
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter(
@@ -177,9 +121,20 @@ export default function StudentPage() {
     if (typeFilter !== 'all') result = result.filter((j) => j.type === typeFilter);
     if (categoryFilter !== 'all') result = result.filter((j) => j.category === categoryFilter);
     setFiltered(result);
-  }, [search, typeFilter, categoryFilter]);
+  }, [search, typeFilter, categoryFilter, allJobs]);
 
-  const categories = Array.from(new Set(JOBS.map((j) => j.category)));
+  const categories = Array.from(new Set(allJobs.map((j) => j.category)));
+
+  if (loading) {
+    return (
+      <div className="page-bg">
+        <Navbar title="Job Board" />
+        <div className="page-content flex items-center justify-center" style={{ minHeight: 400 }}>
+          <Spin size="large" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="page-bg">
@@ -197,8 +152,18 @@ export default function StudentPage() {
             Find Your <span className="hero-accent-dark">Dream Job</span>
           </h1>
           <p className="student-hero-sub">
-            Explore {JOBS.length} opportunities from top companies worldwide
+            Explore {allJobs.length} opportunities from top companies worldwide
           </p>
+          <Button
+            type="primary"
+            icon={<FileTextOutlined />}
+            size="large"
+            shape="round"
+            style={{ marginTop: 18, background: '#6366f1', borderColor: '#6366f1', fontWeight: 700, fontSize: 15, height: 46, paddingInline: 28 }}
+            onClick={() => router.push(profileCompleted ? '/resume' : '/resume/create')}
+          >
+            {profileCompleted ? 'View Resume' : 'Create Resume'}
+          </Button>
         </motion.div>
 
         {/* Filters */}
@@ -249,7 +214,7 @@ export default function StudentPage() {
           style={{ marginBottom: 20, color: '#64748b', fontSize: 14 }}
         >
           <FilterOutlined style={{ marginRight: 6 }} />
-          Showing <strong>{filtered.length}</strong> of <strong>{JOBS.length}</strong> jobs
+          Showing <strong>{filtered.length}</strong> of <strong>{allJobs.length}</strong> jobs
         </motion.div>
 
         {/* Job Cards */}
@@ -270,7 +235,14 @@ export default function StudentPage() {
                     <Card
                       className="job-card"
                       style={{ borderRadius: 18, border: '1px solid #f1f5f9', height: '100%' }}
-                      bodyStyle={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', height: '100%' }}
+                      styles={{
+                        body: {
+                          padding: '22px 24px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          height: '100%',
+                        },
+                      }}
                     >
                       {/* Header */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>

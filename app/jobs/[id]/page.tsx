@@ -1,16 +1,15 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
-  Alert,
   Button,
   Col,
   Divider,
   Form,
-  Input,
   message,
   Modal,
   Row,
+  Spin,
   Tag,
 } from 'antd';
 import {
@@ -24,17 +23,20 @@ import {
   BankOutlined,
   CalendarOutlined,
   TrophyOutlined,
+  MessageOutlined,
 } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 import { useRouter, useParams } from 'next/navigation';
 import Navbar from '../../components/Navbar';
-
-const { TextArea } = Input;
+import { apiGetMe, type AuthUser } from '../../lib/authApi';
+import { apiGetJobById, apiApplyToJob, type Job as ApiJob } from '../../lib/jobsApi';
+import { apiCreateOrGetConversation } from '../../lib/messagesApi';
 
 interface Job {
   id: string;
   title: string;
   companyName: string;
+  companyUserId: string;
   location: string;
   salary: string;
   experience: string;
@@ -48,150 +50,6 @@ interface Job {
   benefits: string[];
   postedAt: string;
 }
-
-const JOBS: Job[] = [
-  {
-    id: '1',
-    title: 'Frontend Developer',
-    companyName: 'TechCorp',
-    location: 'New York, USA',
-    salary: '$80,000 - $100,000',
-    experience: '2-4 years',
-    deadline: '2026-04-15',
-    type: 'Full-time',
-    category: 'Engineering',
-    applicants: 42,
-    postedAt: '2026-03-01',
-    description: 'Build modern, responsive web interfaces using React and TypeScript. Work closely with the design and product teams to deliver exceptional user experiences.',
-    requirements: ['3+ years React experience', 'Strong TypeScript skills', 'CSS/Tailwind proficiency', 'Familiarity with REST APIs'],
-    responsibilities: ['Build scalable UI components', 'Conduct code reviews', 'Collaborate with design team', 'Optimize for performance'],
-    benefits: ['Health insurance', 'Remote work option', '401k matching', 'Annual learning budget'],
-  },
-  {
-    id: '2',
-    title: 'Backend Engineer',
-    companyName: 'DataSystems',
-    location: 'San Francisco, USA',
-    salary: '$90,000 - $120,000',
-    experience: '3-5 years',
-    deadline: '2026-04-20',
-    type: 'Full-time',
-    category: 'Engineering',
-    applicants: 35,
-    postedAt: '2026-03-02',
-    description: 'Design and build scalable backend services and APIs for our data platform serving millions of users.',
-    requirements: ['Node.js expertise', 'Database design experience', 'REST & GraphQL knowledge', 'AWS/GCP experience'],
-    responsibilities: ['Design microservices', 'Database optimization', 'API documentation', 'Performance monitoring'],
-    benefits: ['Health insurance', 'Stock options', 'Flexible hours', 'Home office stipend'],
-  },
-  {
-    id: '3',
-    title: 'UI/UX Designer',
-    companyName: 'CreativeHub',
-    location: 'Remote',
-    salary: '$60,000 - $80,000',
-    experience: '1-3 years',
-    deadline: '2026-04-10',
-    type: 'Remote',
-    category: 'Design',
-    applicants: 28,
-    postedAt: '2026-03-03',
-    description: 'Create beautiful and intuitive user experiences for web and mobile products.',
-    requirements: ['Proficiency in Figma', 'User research skills', 'Prototyping experience', 'Design system knowledge'],
-    responsibilities: ['Create wireframes & prototypes', 'Conduct user testing', 'Maintain design system', 'Work with developers'],
-    benefits: ['Fully remote', 'Flexible schedule', 'Design tools provided', 'Professional development'],
-  },
-  {
-    id: '4',
-    title: 'Data Analyst',
-    companyName: 'InsightCo',
-    location: 'Chicago, USA',
-    salary: '$70,000 - $90,000',
-    experience: '2-3 years',
-    deadline: '2026-04-25',
-    type: 'Full-time',
-    category: 'Analytics',
-    applicants: 19,
-    postedAt: '2026-03-04',
-    description: 'Turn complex data into actionable business insights to drive strategic decisions.',
-    requirements: ['SQL expertise', 'Python/R proficiency', 'Tableau/Power BI experience', 'Statistical analysis skills'],
-    responsibilities: ['Build dashboards', 'Run A/B tests', 'Data pipeline maintenance', 'Present findings to stakeholders'],
-    benefits: ['Health & dental', 'Gym membership', 'Conference budget', 'Hybrid work'],
-  },
-  {
-    id: '5',
-    title: 'Marketing Intern',
-    companyName: 'BrandBoost',
-    location: 'Austin, USA',
-    salary: '$20/hr',
-    experience: '0-1 year',
-    deadline: '2026-03-30',
-    type: 'Internship',
-    category: 'Marketing',
-    applicants: 55,
-    postedAt: '2026-03-05',
-    description: 'Support the marketing team with campaigns, content creation and social media management.',
-    requirements: ['Marketing or related degree in progress', 'Social media knowledge', 'Strong communication skills'],
-    responsibilities: ['Assist with social media', 'Help create content', 'Support email campaigns', 'Market research'],
-    benefits: ['Mentorship program', 'Paid internship', 'Networking events', 'Potential full-time offer'],
-  },
-  {
-    id: '6',
-    title: 'DevOps Engineer',
-    companyName: 'CloudBase',
-    location: 'Seattle, USA',
-    salary: '$100,000 - $130,000',
-    experience: '4-6 years',
-    deadline: '2026-05-01',
-    type: 'Contract',
-    category: 'Engineering',
-    applicants: 14,
-    postedAt: '2026-03-06',
-    description: 'Build and maintain CI/CD pipelines, infrastructure, and cloud environments.',
-    requirements: ['Kubernetes & Docker', 'AWS/Azure/GCP expertise', 'Terraform/Ansible', 'Strong scripting skills'],
-    responsibilities: ['Manage cloud infrastructure', 'Automate deployments', 'Monitor system reliability', 'Security hardening'],
-    benefits: ['Competitive contract rate', 'Remote allowed', 'Latest tooling'],
-  },
-  {
-    id: '7',
-    title: 'Product Manager',
-    companyName: 'LaunchPad',
-    location: 'Remote',
-    salary: '$95,000 - $115,000',
-    experience: '3-6 years',
-    deadline: '2026-04-18',
-    type: 'Remote',
-    category: 'Management',
-    applicants: 31,
-    postedAt: '2026-03-07',
-    description: 'Drive product vision and strategy for our SaaS platform used by over 50,000 businesses.',
-    requirements: ['PM experience in SaaS', 'Agile/Scrum knowledge', 'Data-driven mindset', 'Excellent communication'],
-    responsibilities: ['Define product roadmap', 'Work with engineering', 'Gather user feedback', 'Track KPIs'],
-    benefits: ['Equity package', 'Fully remote', 'Wellness allowance', 'Unlimited PTO'],
-  },
-  {
-    id: '8',
-    title: 'React Native Developer',
-    companyName: 'MobileFirst',
-    location: 'Boston, USA',
-    salary: '$85,000 - $105,000',
-    experience: '2-4 years',
-    deadline: '2026-04-22',
-    type: 'Part-time',
-    category: 'Engineering',
-    applicants: 23,
-    postedAt: '2026-03-08',
-    description: 'Build cross-platform mobile apps for iOS and Android using React Native.',
-    requirements: ['React Native expertise', 'TypeScript proficiency', 'App Store / Play Store deployments', 'Redux/Zustand'],
-    responsibilities: ['Develop mobile features', 'Performance optimisation', 'App store releases', 'Bug fixing'],
-    benefits: ['Part-time flexible hours', 'Remote-friendly', 'Equity options'],
-  },
-];
-
-const CURRENT_STUDENT = {
-  name: 'Alice Johnson',
-  email: 'student@test.com',
-};
 
 const typeColors: Record<string, string> = {
   'Full-time': 'green',
@@ -212,27 +70,105 @@ export default function JobDetailPage() {
   const jobId = params.id as string;
 
   const [job, setJob] = useState<Job | null>(null);
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
+  const [loading, setLoading] = useState(true);
   const [applyModal, setApplyModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [applied, setApplied] = useState(false);
+  const [messagingCompany, setMessagingCompany] = useState(false);
   const [form] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
 
   useEffect(() => {
-    const found = JOBS.find((j) => j.id === jobId);
-    if (!found) { router.push('/student'); return; }
-    setJob(found);
-  }, [jobId, router]);
+    const load = async () => {
+      let me: AuthUser | null = null;
+      try {
+        me = await apiGetMe();
+        setAuthUser(me);
+      } catch {
+        router.replace('/login');
+        return;
+      }
+      try {
+        const apiJob: ApiJob = await apiGetJobById(jobId);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const companyObj = apiJob.companyId as any;
+        const companyName: string =
+          companyObj?.name ?? companyObj?.company ?? companyObj?.email ?? 'Company';
+        const companyUserId: string = companyObj?._id ?? '';
+        const userId = me?.id ?? me?._id;
+        const alreadyApplied = apiJob.applicants?.some((a) => {
+          const aid = typeof a.userId === 'string' ? a.userId : (a.userId as Record<string, unknown>)?._id ?? (a.userId as Record<string, unknown>)?.id;
+          return aid === userId;
+        }) ?? false;
+        setApplied(alreadyApplied);
+        setJob({
+          id: apiJob._id,
+          title: apiJob.title,
+          companyName,
+          companyUserId,
+          location: apiJob.location,
+          salary: apiJob.salary,
+          experience: apiJob.experience,
+          deadline: apiJob.deadline.substring(0, 10),
+          type: apiJob.type,
+          category: apiJob.category,
+          applicants: apiJob.applicants?.length ?? 0,
+          description: apiJob.description,
+          requirements: apiJob.requirements ?? [],
+          responsibilities: apiJob.responsibilities ?? [],
+          benefits: apiJob.benefits ?? [],
+          postedAt: apiJob.createdAt?.substring(0, 10) ?? '',
+        });
+      } catch {
+        messageApi.error('Job not found.');
+        router.push('/student');
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [jobId, router, messageApi]);
 
-  const handleApply = async (values: { coverLetter: string }) => {
+  const handleApply = async () => {
     setSubmitting(true);
-    await new Promise((r) => setTimeout(r, 800));
-    setApplied(true);
-    setSubmitting(false);
-    setApplyModal(false);
-    form.resetFields();
-    messageApi.success('Application submitted successfully! 🎉');
+    try {
+      await apiApplyToJob(jobId);
+      setApplied(true);
+      setApplyModal(false);
+      form.resetFields();
+      messageApi.success('Application submitted successfully! 🎉');
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } }; message?: string };
+      messageApi.error(e?.response?.data?.message || e?.message || 'Failed to apply');
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  const handleMessageCompany = async () => {
+    if (!job?.companyUserId) return;
+    setMessagingCompany(true);
+    try {
+      const conv = await apiCreateOrGetConversation(job.companyUserId);
+      router.push(`/messages/${conv._id}`);
+    } catch {
+      messageApi.error('Could not open conversation.');
+    } finally {
+      setMessagingCompany(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="page-bg">
+        <Navbar title="Job Details" />
+        <div className="page-content flex items-center justify-center" style={{ minHeight: 400 }}>
+          <Spin size="large" />
+        </div>
+      </div>
+    );
+  }
 
   if (!job) return null;
 
@@ -273,11 +209,23 @@ export default function JobDetailPage() {
                 {applied ? (
                   <Button
                     size="large"
-                    icon={<CheckCircleOutlined />}
-                    disabled
-                    style={{ borderRadius: 12, background: '#ecfdf5', color: '#10b981', borderColor: '#a7f3d0', fontWeight: 700, height: 48, padding: '0 28px' }}
+                    icon={<MessageOutlined />}
+                    loading={messagingCompany}
+                    onClick={handleMessageCompany}
+                    style={{ borderRadius: 12, background: '#eff6ff', color: '#3b82f6', borderColor: '#bfdbfe', fontWeight: 700, height: 48, padding: '0 28px' }}
                   >
-                    Applied ✓
+                    Message
+                  </Button>
+                ) : !authUser?.profileCompleted ? (
+                  <Button
+                    type="primary"
+                    size="large"
+                    icon={<SendOutlined />}
+                    className="submit-btn"
+                    style={{ height: 48, padding: '0 28px', width: 'auto' }}
+                    onClick={() => router.push('/resume/create')}
+                  >
+                    Please Create Resume
                   </Button>
                 ) : (
                   <Button
@@ -382,12 +330,16 @@ export default function JobDetailPage() {
                     Submit your application and cover letter directly to {job.companyName}.
                   </p>
                   {applied ? (
-                    <Alert
-                      message="You've already applied for this job."
-                      type="success"
-                      showIcon
-                      style={{ borderRadius: 10 }}
-                    />
+                    <Button
+                      block
+                      size="large"
+                      icon={<MessageOutlined />}
+                      loading={messagingCompany}
+                      onClick={handleMessageCompany}
+                      style={{ borderRadius: 10, background: '#eff6ff', color: '#3b82f6', borderColor: '#bfdbfe', fontWeight: 700 }}
+                    >
+                      Message Company
+                    </Button>
                   ) : (
                     <Button
                       type="primary"
@@ -419,37 +371,24 @@ export default function JobDetailPage() {
         footer={null}
         width={540}
       >
-        <div
-          style={{
-            background: '#f8fafc',
-            borderRadius: 12,
-            padding: '14px 18px',
-            marginBottom: 20,
-            marginTop: 16,
-            border: '1px solid #e2e8f0',
-          }}
-        >
-          <div style={{ fontWeight: 700, color: '#0f172a' }}>{CURRENT_STUDENT.name}</div>
-          <div style={{ fontSize: 13, color: '#64748b' }}>{CURRENT_STUDENT.email}</div>
-        </div>
+        {authUser && (
+          <div
+            style={{
+              background: '#f8fafc',
+              borderRadius: 12,
+              padding: '14px 18px',
+              marginBottom: 20,
+              marginTop: 16,
+              border: '1px solid #e2e8f0',
+            }}
+          >
+            <div style={{ fontWeight: 700, color: '#0f172a' }}>{authUser.name}</div>
+            <div style={{ fontSize: 13, color: '#64748b' }}>{authUser.email}</div>
+          </div>
+        )}
 
         <Form form={form} layout="vertical" onFinish={handleApply} requiredMark={false}>
-          <Form.Item
-            name="coverLetter"
-            label={<span style={{ fontWeight: 600 }}>Cover Letter</span>}
-            rules={[
-              { required: true, message: 'Please write a cover letter' },
-              { min: 80, message: 'At least 80 characters' },
-            ]}
-          >
-            <TextArea
-              rows={6}
-              placeholder={`Dear Hiring Manager,\n\nI am excited to apply for the ${job.title} position at ${job.companyName}...`}
-              style={{ borderRadius: 10 }}
-            />
-          </Form.Item>
-
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 16 }}>
             <Button size="large" onClick={() => { setApplyModal(false); form.resetFields(); }}>
               Cancel
             </Button>

@@ -37,7 +37,6 @@ export function proxy(request: NextRequest) {
       pathname.startsWith("/admin") ||
       pathname.startsWith("/company") ||
       pathname.startsWith("/student") ||
-      pathname.startsWith("/student-details") ||
       pathname.startsWith("/company-details")
     ) {
       return NextResponse.redirect(new URL("/login", request.url));
@@ -65,19 +64,6 @@ export function proxy(request: NextRequest) {
     }
   }
 
-  // STUDENT
-  if (role === "student") {
-    // If profile incomplete, redirect to /student-details and block /student
-    if (!profileCompleted && pathname.startsWith("/student") && !pathname.startsWith("/student-details")) {
-      return NextResponse.redirect(new URL("/student-details", request.url));
-    }
-
-    // If profile complete, redirect /student-details to /student
-    if (profileCompleted && pathname.startsWith("/student-details")) {
-      return NextResponse.redirect(new URL("/student", request.url));
-    }
-  }
-
   // ─── ROLE-BASED ROUTE PROTECTION ───
   const forbidden: Record<string, string[]> = {
     student: ["/admin", "/company"],
@@ -101,7 +87,6 @@ export const config = {
     "/company/:path*",
     "/company-details",
     "/student/:path*",
-    "/student-details",
     "/login",
     "/register",
   ],

@@ -2,16 +2,16 @@
 import axiosInstance from './axiosInstance';
 
 export interface CompanyDetailPayload {
-   companyName: string;
-    industry: string;
-    size: string;
-    foundedYear: string;
-    website?: string;
-    location: string;
-    description: string;
-    contactPhone: string;
-    contactEmail: string;
-    linkedin?: string;
+  companyName: string;
+  industry: string;
+  size: string;
+  foundedYear: string;
+  website?: string;
+  location: string;
+  description: string;
+  phone: string;
+  contactEmail: string;
+  linkedIn?: string;
 }
 
 export const apiUpsertCompanyDetail = async (

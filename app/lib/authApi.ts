@@ -91,6 +91,17 @@ export const updateUserStatus = async (id: string, status: string) => {
   }
 };
 
+// Update logged in user profile (e.g. name)
+export const updateCurrentUser = async (id: string, payload: { name?: string }) => {
+  try {
+    const res = await axiosInstance.patch(`/users/${id}`, payload);
+    return res.data;
+  } catch (error: unknown) {
+    const err = error as { response?: { data: unknown }; message: string };
+    throw err.response?.data || err.message;
+  }
+};
+
 // Get All Users (Admin)
 export const getAllUsers = async (): Promise<AuthUser[]> => {
   try {
