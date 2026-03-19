@@ -29,7 +29,8 @@ import { motion } from 'framer-motion';
 // import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Navbar from '../components/Navbar';
-import { getAllUsers, getAllJobs, updateUserStatus, AuthUser } from '../lib/authApi';
+import { getAllUsers, updateUserStatus, AuthUser } from '../lib/authApi';
+import { apiAdminGetAllJobs, Job } from '../lib/jobsApi';
 
 const stagger = {
   hidden: { opacity: 0 },
@@ -53,20 +54,27 @@ const roleColor: Record<string, string> = {
   student: 'geekblue',
 };
 
+const roleAvatarClass: Record<AuthUser['role'], string> = {
+  admin: '!bg-red-500',
+  company: '!bg-amber-500',
+  student: '!bg-indigo-500',
+};
+
 export default function AdminDashboard() {
   // const { user, loading } = useAuth();
   const router = useRouter();
   const [users, setUsers] = useState<AuthUser[]>([]);
-  const [jobs, setJobs] = useState<any[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [messageApi, contextHolder] = message.useMessage();
 
   const fetchData = async () => {
     try {
-      // const [fetchedUsers, fetchedJobs] = await Promise.all([getAllUsers(), getAllJobs()]);
-      const fetchedUsers = await getAllUsers();
-      // const fetchedJobs = await getAllJobs();
+      const [fetchedUsers, fetchedJobs] = await Promise.all([
+        getAllUsers(),
+        apiAdminGetAllJobs(),
+      ]);
       setUsers(fetchedUsers);
-      // setJobs(fetchedJobs);
+      setJobs(fetchedJobs);
     } catch {
       messageApi.error('Failed to load data.');
     }
@@ -105,10 +113,10 @@ export default function AdminDashboard() {
   const companies = users.filter((u) => u.role === 'company');
 
   const statCards = [
-    { title: 'Total Users', value: users.length, icon: <TeamOutlined />, color: '#6366f1', bg: '#eef2ff' },
-    { title: 'Pending Approvals', value: pending.length, icon: <ClockCircleOutlined />, color: '#f59e0b', bg: '#fffbeb' },
-    { title: 'Companies', value: companies.length, icon: <BankOutlined />, color: '#10b981', bg: '#ecfdf5' },
-    { title: 'Active Jobs', value: jobs.length, icon: <FileTextOutlined />, color: '#3b82f6', bg: '#eff6ff' },
+    { title: 'Total Users', value: users.length, icon: <TeamOutlined />, iconColor: 'text-indigo-500', iconBg: 'bg-indigo-50' },
+    { title: 'Pending Approvals', value: pending.length, icon: <ClockCircleOutlined />, iconColor: 'text-amber-500', iconBg: 'bg-amber-50' },
+    { title: 'Companies', value: companies.length, icon: <BankOutlined />, iconColor: 'text-emerald-500', iconBg: 'bg-emerald-50' },
+    { title: 'Active Jobs', value: jobs.length, icon: <FileTextOutlined />, iconColor: 'text-blue-500', iconBg: 'bg-blue-50' },
   ];
 
   const columns = [
@@ -116,17 +124,14 @@ export default function AdminDashboard() {
       title: 'User',
       key: 'user',
       render: (_: unknown, record: AuthUser) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div className="flex items-center gap-2.5">
           <Avatar
-            style={{
-              background: record.role === 'admin' ? '#ef4444' : record.role === 'company' ? '#f59e0b' : '#6366f1',
-              flexShrink: 0,
-            }}
+            className={`${roleAvatarClass[record.role]} shrink-0`}
             icon={<UserOutlined />}
           />
           <div>
-            <div style={{ fontWeight: 600, color: '#0f172a', fontSize: 14 }}>{record.name}</div>
-            <div style={{ fontSize: 12, color: '#94a3b8' }}>{record.email}</div>
+            <div className="text-sm font-semibold text-slate-900">{record.name}</div>
+            <div className="text-xs text-slate-400">{record.email}</div>
           </div>
         </div>
       ),
@@ -136,7 +141,7 @@ export default function AdminDashboard() {
       dataIndex: 'role',
       key: 'role',
       render: (role: string) => (
-        <Tag color={roleColor[role]} style={{ borderRadius: 20, fontWeight: 600, textTransform: 'capitalize' }}>
+        <Tag color={roleColor[role]} className="rounded-full font-semibold capitalize">
           {role}
         </Tag>
       ),
@@ -148,7 +153,7 @@ export default function AdminDashboard() {
       render: (status: string) => (
         <Badge
           status={statusColor[status] as 'success' | 'warning' | 'error'}
-          text={<span style={{ fontWeight: 600, textTransform: 'capitalize' }}>{status}</span>}
+          text={<span className="font-semibold capitalize">{status}</span>}
         />
       ),
     },
@@ -156,15 +161,15 @@ export default function AdminDashboard() {
       title: 'Joined',
       dataIndex: 'createdAt',
       key: 'createdAt',
-      render: (date: string) => <span style={{ color: '#64748b', fontSize: 13 }}>{date}</span>,
+      render: (date: string) => <span className="text-[13px] text-slate-500">{date}</span>,
     },
     {
       title: 'Actions',
       key: 'actions',
       render: (_: unknown, record: AuthUser) => {
-        if (record.role === 'admin') return <span style={{ color: '#94a3b8', fontSize: 12 }}>—</span>;
+        if (record.role === 'admin') return <span className="text-xs text-slate-400">-</span>;
         return (
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div className="flex gap-2">
             {record.status !== 'approved' && (
               <Tooltip title="Approve">
                 <Button
@@ -172,7 +177,7 @@ export default function AdminDashboard() {
                   shape="round"
                   size="small"
                   icon={<CheckCircleOutlined />}
-                  style={{ background: '#10b981', borderColor: '#10b981', fontWeight: 600 }}
+                  className="border-emerald-500! bg-emerald-500! font-semibold!"
                   onClick={() => approveUser(record._id || record.id)}
                 >
                   Approve
@@ -191,7 +196,7 @@ export default function AdminDashboard() {
                   shape="round"
                   size="small"
                   icon={<CloseCircleOutlined />}
-                  style={{ fontWeight: 600 }}
+                  className="font-semibold"
                 >
                   Reject
                 </Button>
@@ -213,38 +218,22 @@ export default function AdminDashboard() {
       <div className="page-content">
         {/* Stats */}
         <motion.div variants={stagger} initial="hidden" animate="visible">
-          <Row gutter={[20, 20]} style={{ marginBottom: 28 }}>
+          <Row gutter={[20, 20]} className="mb-7">
             {statCards.map((s, i) => (
               <Col xs={24} sm={12} lg={6} key={i}>
                 <motion.div variants={fadeUp}>
                   <Card
-                    className="stat-card-new"
-                    style={{ borderRadius: 16, border: '1px solid #f1f5f9' }}
-                    styles={{
-                      body: { padding: '20px 24px' }
-                    }}
+                    classNames={{ body: 'px-6 py-5' }}
+                    className="stat-card-new rounded-2xl border border-slate-100"
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                      <div
-                        style={{
-                          width: 48,
-                          height: 48,
-                          borderRadius: 12,
-                          background: s.bg,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: 22,
-                          color: s.color,
-                          flexShrink: 0,
-                        }}
-                      >
+                    <div className="flex items-center gap-3.5">
+                      <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-[22px] ${s.iconBg} ${s.iconColor}`}>
                         {s.icon}
                       </div>
                       <Statistic
-                        title={<span style={{ fontSize: 13, color: '#64748b' }}>{s.title}</span>}
+                        title={<span className="text-[13px] text-slate-500">{s.title}</span>}
                         value={s.value}
-                        valueStyle={{ fontSize: 28, fontWeight: 800, color: '#0f172a' }}
+                        formatter={(value) => <span className="text-[28px] font-extrabold text-slate-900">{value}</span>}
                       />
                     </div>
                   </Card>
@@ -259,18 +248,16 @@ export default function AdminDashboard() {
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
             <Card
               title={
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <ClockCircleOutlined style={{ color: '#f59e0b', fontSize: 18 }} />
-                  <span style={{ fontWeight: 700 }}>Pending Approvals</span>
-                  <Tag color="warning" style={{ borderRadius: 20, fontWeight: 700, marginLeft: 4 }}>
+                <div className="flex items-center gap-2.5">
+                  <ClockCircleOutlined className="text-lg text-amber-500" />
+                  <span className="font-bold">Pending Approvals</span>
+                  <Tag color="warning" className="ml-1 rounded-full font-bold">
                     {pending.length}
                   </Tag>
                 </div>
               }
-              style={{ borderRadius: 16, border: '1px solid #fde68a', marginBottom: 24 }}
-              styles={{
-                body: { padding: 0 }
-              }}
+              className="mb-6 rounded-2xl border border-amber-200"
+              classNames={{ body: 'p-0' }}
             >
               <Table
                 dataSource={pending}
@@ -287,21 +274,19 @@ export default function AdminDashboard() {
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
           <Card
             title={
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <TeamOutlined style={{ color: '#6366f1', fontSize: 18 }} />
-                <span style={{ fontWeight: 700 }}>All Users</span>
-                <Tag color="purple" style={{ borderRadius: 20, fontWeight: 700, marginLeft: 4 }}>
+              <div className="flex items-center gap-2.5">
+                <TeamOutlined className="text-lg text-indigo-500" />
+                <span className="font-bold">All Users</span>
+                <Tag color="purple" className="ml-1 rounded-full font-bold">
                   {users.length}
                 </Tag>
               </div>
             }
-            style={{ borderRadius: 16, border: '1px solid #f1f5f9' }}
-            styles={{
-              body: { padding: 0 }
-            }}
+            className="rounded-2xl border border-slate-100"
+            classNames={{ body: 'p-0' }}
           >
             {users.length === 0 ? (
-              <Empty style={{ padding: 40 }} description="No users found" />
+              <Empty className="py-10" description="No users found" />
             ) : (
               <Table
                 dataSource={users}
@@ -318,38 +303,46 @@ export default function AdminDashboard() {
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
           <Card
             title={
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <FileTextOutlined style={{ color: '#3b82f6', fontSize: 18 }} />
-                <span style={{ fontWeight: 700 }}>Posted Jobs</span>
-                <Tag color="blue" style={{ borderRadius: 20, fontWeight: 700, marginLeft: 4 }}>
+              <div className="flex items-center gap-2.5">
+                <FileTextOutlined className="text-lg text-blue-500" />
+                <span className="font-bold">Posted Jobs</span>
+                <Tag color="blue" className="ml-1 rounded-full font-bold">
                   {jobs.length}
                 </Tag>
               </div>
             }
-            style={{ borderRadius: 16, border: '1px solid #f1f5f9', marginTop: 24 }}
-            styles={{
-              body: { padding: 0 }
-            }}
+            className="mt-6 rounded-2xl border border-slate-100"
+            classNames={{ body: 'p-0' }}
           >
             <Table
               dataSource={jobs}
-              rowKey="id"
+              rowKey={(r: Job) => r._id}
               pagination={{ pageSize: 6, showSizeChanger: false }}
               size="middle"
               columns={[
                 {
                   title: 'Job Title',
                   dataIndex: 'title',
-                  render: (t: string) => <span style={{ fontWeight: 600, color: '#0f172a' }}>{t}</span>,
+                  render: (t: string) => <span className="font-semibold text-slate-900">{t}</span>,
                 },
-                { title: 'Company', dataIndex: 'companyName', render: (c: string) => <span style={{ color: '#64748b' }}>{c}</span> },
+                {
+                  title: 'Company',
+                  dataIndex: 'companyId',
+                  render: (companyId: Job['companyId']) => {
+                    if (typeof companyId === 'object' && companyId !== null) {
+                      const company = companyId as { name?: string; company?: string; companyName?: string };
+                      return <span className="text-slate-500">{company.name || company.company || company.companyName || 'Company'}</span>;
+                    }
+                    return <span className="text-slate-500">Company</span>;
+                  },
+                },
                 {
                   title: 'Type',
                   dataIndex: 'type',
-                  render: (t: string) => <Tag color="geekblue" style={{ borderRadius: 20 }}>{t}</Tag>,
+                  render: (t: string) => <Tag color="geekblue" className="rounded-full">{t}</Tag>,
                 },
-                { title: 'Location', dataIndex: 'location', render: (l: string) => <span style={{ color: '#64748b', fontSize: 13 }}>{l}</span> },
-                { title: 'Applicants', dataIndex: 'applicants', render: (a: number) => <Tag color="green">{a || 0}</Tag> },
+                { title: 'Location', dataIndex: 'location', render: (l: string) => <span className="text-[13px] text-slate-500">{l}</span> },
+                { title: 'Applicants', dataIndex: 'applicants', render: (a: Job['applicants']) => <Tag color="green">{a?.length || 0}</Tag> },
               ]}
             />
           </Card>
