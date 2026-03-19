@@ -63,13 +63,15 @@ export default function ChatPage() {
         setConversation(conv);
         await fetchMessages();
 
-        const token = localStorage.getItem('accessToken') || '';
+        const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') || undefined : undefined;
         const socket = initializeSocket(token, (newMessage: ChatMessage) => {
           if (newMessage.conversationId === conversationId) {
             setMessages((prev) => [...prev.filter(m => m._id !== newMessage._id), newMessage]);
           }
         });
-        socket.emit('joinConversation', conversationId);
+        const joinRoom = () => socket.emit('joinConversation', conversationId);
+        socket.on('connect', joinRoom);
+        if (socket.connected) joinRoom();
 
       } catch {
         router.replace('/login');
@@ -110,7 +112,6 @@ export default function ChatPage() {
         // Emit via WebSocket
         socket.emit('sendMessage', {
           conversationId,
-          senderId: myId,
           content: text
         });
       } else {

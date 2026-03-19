@@ -22,6 +22,7 @@ export interface Conversation {
   _id: string;
   participants: (string | MessageParticipant)[];
   lastMessage: string | null;
+  lastMessageSenderId?: string | MessageParticipant | null;
   lastMessageAt: string | null;
   createdAt: string;
   updatedAt: string;

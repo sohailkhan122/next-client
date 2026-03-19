@@ -49,6 +49,7 @@ export default function MessagesPage() {
   const [me, setMe] = useState<AuthUser | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
+  const myId = me?.id ?? me?._id;
 
   const loadConversations = useCallback(async () => {
     try {
@@ -129,7 +130,24 @@ export default function MessagesPage() {
                 const other = getOtherParticipant(conv);
                 const name = other?.name ?? 'User';
                 const email = other?.email ?? '';
-                const lastMsg = conv.lastMessage?.trim() || 'No messages yet';
+                const senderId =
+                  typeof conv.lastMessageSenderId === 'string'
+                    ? conv.lastMessageSenderId
+                    : conv.lastMessageSenderId?._id;
+                const senderName =
+                  typeof conv.lastMessageSenderId === 'string'
+                    ? undefined
+                    : conv.lastMessageSenderId?.name;
+
+                let lastMsg = 'No messages yet';
+                if (conv.lastMessage?.trim()) {
+                  if (myId && senderId === myId) {
+                    lastMsg = `You: ${conv.lastMessage}`;
+                  } else {
+                    lastMsg = `${senderName ?? other?.name ?? 'User'}: ${conv.lastMessage}`;
+                  }
+                }
+
                 const lastTime = conv.lastMessageAt
                   ? formatConversationLastTime(conv.lastMessageAt)
                   : '';
