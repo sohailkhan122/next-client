@@ -9,7 +9,7 @@ import {
   message,
   Modal,
   Row,
-  Spin,
+  Skeleton,
   Tag,
 } from 'antd';
 import {
@@ -28,6 +28,7 @@ import {
 import { motion } from 'framer-motion';
 import { useRouter, useParams } from 'next/navigation';
 import Navbar from '../../components/Navbar';
+import { CardSkeleton } from '../../components/skeletons';
 import { apiGetMe, type AuthUser } from '../../lib/authApi';
 import { apiGetJobById, apiApplyToJob, type Job as ApiJob } from '../../lib/jobsApi';
 import { apiCreateOrGetConversation } from '../../lib/messagesApi';
@@ -163,8 +164,45 @@ export default function JobDetailPage() {
     return (
       <div className="page-bg">
         <Navbar title="Job Details" />
-        <div className="page-content flex items-center justify-center" style={{ minHeight: 400 }}>
-          <Spin size="large" />
+        <div className="page-content mx-auto" style={{ maxWidth: 900 }}>
+          <div className="mb-5">
+            <Skeleton.Button active style={{ height: 40, width: 144 }} />
+          </div>
+
+          <div className="jd-hero-card mb-4">
+            <div className="jd-hero-left">
+              <Skeleton.Avatar active size={62} shape="circle" />
+              <div>
+                <Skeleton.Input active className="max-w-full" style={{ height: 28, width: 256 }} />
+                <div className="mt-2"><Skeleton.Input active style={{ height: 16, width: 144 }} /></div>
+                <div className="mt-3 flex gap-2">
+                  <Skeleton.Button active size="small" style={{ height: 24, width: 80 }} />
+                  <Skeleton.Button active size="small" style={{ height: 24, width: 80 }} />
+                </div>
+              </div>
+            </div>
+            <Skeleton.Button active style={{ height: 48, width: 144 }} />
+          </div>
+
+          <Row gutter={[16, 16]} className="mb-6">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <Col xs={12} sm={8} md={4} key={index}>
+                <div className="jd-info-chip">
+                  <Skeleton.Input active style={{ height: 12, width: 64 }} />
+                  <div className="mt-2"><Skeleton.Input active style={{ height: 16, width: 48 }} /></div>
+                </div>
+              </Col>
+            ))}
+          </Row>
+
+          <Row gutter={[24, 24]}>
+            <Col xs={24} lg={16}>
+              <CardSkeleton count={1} showHeader={false} showActions={false} />
+            </Col>
+            <Col xs={24} lg={8}>
+              <CardSkeleton count={2} showHeader={false} />
+            </Col>
+          </Row>
         </div>
       </div>
     );

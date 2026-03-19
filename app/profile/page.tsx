@@ -13,7 +13,7 @@ import {
   Modal,
   Row,
   Select,
-  Spin,
+  Skeleton,
   Tag,
 } from 'antd';
 import {
@@ -32,6 +32,7 @@ import {
 import { motion } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Navbar from '../components/Navbar';
+import { ListSkeleton, ProfileSkeleton, TableSkeleton } from '../components/skeletons';
 import { apiGetMe, updateCurrentUser, type AuthUser } from '../lib/authApi';
 import { apiGetMyCompanyDetail, apiUpsertCompanyDetail } from '../lib/companyDetailApi';
 import { apiGetMyStudentDetail, apiUpsertStudentDetail } from '../lib/studentDetailApi';
@@ -50,9 +51,21 @@ const stagger = {
 
 export default function ProfilePage() {
   return (
-    <Suspense fallback={<div>Loading…</div>}>
+    <Suspense fallback={<ProfileSuspenseSkeleton />}>
       <ProfileContent />
     </Suspense>
+  );
+}
+
+function ProfileSuspenseSkeleton() {
+  return (
+    <div className="page-bg">
+      <Navbar title="Profile" />
+      <div className="page-content">
+        <ProfileSkeleton className="mb-6" />
+        <TableSkeleton rows={4} columns={3} />
+      </div>
+    </div>
   );
 }
 
@@ -194,8 +207,17 @@ function ProfileContent() {
     return (
       <div className="page-bg">
         <Navbar title="Profile" />
-        <div className="page-content flex items-center justify-center" style={{ minHeight: 400 }}>
-          <Spin size="large" />
+        <div className="page-content">
+          <ProfileSkeleton className="mb-6" />
+          {searchParams.get('role') === 'student' ? (
+            <ListSkeleton count={3} withAvatar={false} />
+          ) : (
+            <TableSkeleton rows={4} columns={3} />
+          )}
+          <div className="mt-6 flex justify-end gap-3">
+            <Skeleton.Button active style={{ height: 40, width: 112 }} />
+            <Skeleton.Button active style={{ height: 40, width: 144 }} />
+          </div>
         </div>
       </div>
     );

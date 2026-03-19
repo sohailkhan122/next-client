@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { Avatar, Button, Empty, Spin } from 'antd';
+import { Avatar, Button, Empty, Skeleton } from 'antd';
 import { ArrowLeftOutlined, MessageOutlined, UserOutlined } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import Navbar from '../components/Navbar';
+import { ListSkeleton } from '../components/skeletons';
 import { apiGetMe, type AuthUser } from '../lib/authApi';
 import {
   apiGetConversations,
@@ -20,6 +21,27 @@ const stagger = {
 const fadeUp = {
   hidden: { opacity: 0, y: 12 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.35 } },
+};
+
+const formatConversationLastTime = (iso: string): string => {
+  const date = new Date(iso);
+  const now = new Date();
+
+  const isSameDay =
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate();
+
+  if (isSameDay) {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  return date.toLocaleString([], {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 };
 
 export default function MessagesPage() {
@@ -58,8 +80,12 @@ export default function MessagesPage() {
     return (
       <div className="page-bg">
         <Navbar title="Messages" />
-        <div className="page-content flex items-center justify-center" style={{ minHeight: 400 }}>
-          <Spin size="large" />
+        <div className="page-content flex-1 w-full max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          <div className="mb-6 mx-1 flex items-center gap-3">
+            <Skeleton.Button active style={{ height: 40, width: 40 }} />
+            <Skeleton.Input active style={{ height: 32, width: 176 }} />
+          </div>
+          <ListSkeleton count={6} withAvatar />
         </div>
       </div>
     );
@@ -90,7 +116,7 @@ export default function MessagesPage() {
           {/* Conversations */}
           {conversations.length === 0 ? (
             <motion.div variants={fadeUp}>
-              <div className="rounded-[24px] border-2 border-dashed border-indigo-200 bg-white py-16 text-center shadow-sm">
+              <div className="rounded-3xl border-2 border-dashed border-indigo-200 bg-white py-16 text-center shadow-sm">
                 <Empty
                   image={<MessageOutlined className="text-5xl text-indigo-200" />}
                   description={<span className="text-slate-500 font-medium text-[15px]">No conversations yet.</span>}
@@ -103,13 +129,9 @@ export default function MessagesPage() {
                 const other = getOtherParticipant(conv);
                 const name = other?.name ?? 'User';
                 const email = other?.email ?? '';
-                // Only show last message if it exists
-                const lastMsg = conv.lastMessage?.content;
-                const lastTime = conv.lastMessage?.createdAt
-                  ? new Date(conv.lastMessage.createdAt).toLocaleDateString(undefined, {
-                    month: 'short',
-                    day: 'numeric'
-                  })
+                const lastMsg = conv.lastMessage?.trim() || 'No messages yet';
+                const lastTime = conv.lastMessageAt
+                  ? formatConversationLastTime(conv.lastMessageAt)
                   : '';
 
                 return (
@@ -121,7 +143,7 @@ export default function MessagesPage() {
                       <Avatar
                         size={52}
                         icon={<UserOutlined />}
-                        className="shadow-md shadow-indigo-100/50 flex-shrink-0 border-2 border-white"
+                        className="shadow-md shadow-indigo-100/50 shrink-0 border-2 border-white"
                         style={{ background: 'linear-gradient(135deg, #818cf8 0%, #4f46e5 100%)' }}
                       />
                       <div className="flex-1 min-w-0">
@@ -129,14 +151,12 @@ export default function MessagesPage() {
                           {name}
                         </div>
                         {email && <div className="text-xs font-medium text-slate-400 truncate mb-0.5">{email}</div>}
-                        {lastMsg && (
-                          <div className="text-[13px] sm:text-sm text-slate-600 mt-1 truncate pr-4 font-medium opacity-90">
-                            {lastMsg}
-                          </div>
-                        )}
+                        <div className="text-[13px] sm:text-sm text-slate-600 mt-1 truncate pr-4 font-medium opacity-90">
+                          {lastMsg}
+                        </div>
                       </div>
                       {lastTime && (
-                        <div className="text-[11px] sm:text-xs font-bold text-slate-400 flex-shrink-0 self-start mt-1 bg-slate-50 px-2 py-0.5 rounded-md">
+                        <div className="text-[11px] sm:text-xs font-bold text-slate-400 shrink-0 self-start mt-1 bg-slate-50 px-2 py-0.5 rounded-md">
                           {lastTime}
                         </div>
                       )}

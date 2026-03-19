@@ -13,7 +13,7 @@ import {
   Modal,
   Row,
   Select,
-  Spin,
+  Skeleton,
   Tag,
   Tooltip,
 } from 'antd';
@@ -36,6 +36,7 @@ import {
 import { motion } from 'framer-motion';
 import { useRouter, useParams } from 'next/navigation';
 import Navbar from '../../components/Navbar';
+import { ListSkeleton } from '../../components/skeletons';
 import {
   apiGetJobById,
   apiGetJobApplicants,
@@ -218,8 +219,24 @@ export default function ApplicantsPage() {
     return (
       <div className="page-bg">
         <Navbar title="Applicants" />
-        <div className="page-content flex items-center justify-center" style={{ minHeight: 400 }}>
-          <Spin size="large" />
+        <div className="page-content">
+          <div className="mb-6 space-y-4">
+            <div className="rounded-3xl border border-slate-200 bg-white p-5 sm:p-8">
+              <Skeleton.Input active className="max-w-full" style={{ height: 40, width: 224 }} />
+              <div className="mt-3"><Skeleton.Input active className="max-w-full" style={{ height: 16, width: 288 }} /></div>
+            </div>
+            <div className="rounded-3xl border border-slate-200 bg-white p-5 sm:p-6">
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-4 sm:gap-4">
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <div key={index} className="rounded-2xl border border-slate-100 p-4">
+                    <Skeleton.Input active style={{ height: 32, width: 56 }} />
+                    <div className="mt-2"><Skeleton.Input active style={{ height: 12, width: 80 }} /></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <ListSkeleton count={6} withAvatar />
         </div>
       </div>
     );

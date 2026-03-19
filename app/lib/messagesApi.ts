@@ -15,12 +15,14 @@ export interface ChatMessage {
   senderId: string | MessageParticipant;
   content: string;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface Conversation {
   _id: string;
   participants: (string | MessageParticipant)[];
-  lastMessage?: ChatMessage;
+  lastMessage: string | null;
+  lastMessageAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -53,5 +55,27 @@ export const apiSendMessage = async (
   content: string,
 ): Promise<ChatMessage> => {
   const res = await axiosInstance.post(`/conversations/${conversationId}/messages`, { content });
+  return res.data;
+};
+
+/** Update a message in a conversation */
+export const apiUpdateMessage = async (
+  conversationId: string,
+  messageId: string,
+  content: string,
+): Promise<ChatMessage> => {
+  const res = await axiosInstance.patch(
+    `/conversations/${conversationId}/messages/${messageId}`,
+    { content },
+  );
+  return res.data;
+};
+
+/** Delete a message from a conversation */
+export const apiDeleteMessage = async (
+  conversationId: string,
+  messageId: string,
+): Promise<{ message: string }> => {
+  const res = await axiosInstance.delete(`/conversations/${conversationId}/messages/${messageId}`);
   return res.data;
 };

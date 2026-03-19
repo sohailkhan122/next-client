@@ -1,38 +1,53 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
+import { ConfigProvider } from "antd";
 import "./globals.css";
 import AntdRegistry from "./AntdRegistry";
-// import { AuthProvider } from "./contexts/AuthContext";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
   subsets: ["latin"],
+  variable: "--font-sans",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
+  variable: "--font-mono",
 });
 
 export const metadata: Metadata = {
-  title: "JobBridge – Find Your Dream Job",
+  title: {
+    default: "JobBridge – Find Your Dream Job",
+    template: "%s | JobBridge",
+  },
   description: "The modern job portal connecting talent with opportunity.",
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${inter.variable} ${jetbrainsMono.variable} min-h-screen bg-slate-50 text-slate-900 antialiased`}
       >
         <AntdRegistry>
-          {/* <AuthProvider> */}
-            {children}
-          {/* </AuthProvider> */}
+          <ConfigProvider
+            theme={{
+              token: {
+                colorPrimary: "#6366f1",
+                colorInfo: "#6366f1",
+                borderRadius: 12,
+                fontFamily: "Inter, Arial, Helvetica, sans-serif",
+              },
+            }}
+          >
+            <div className="relative min-h-screen overflow-x-hidden">
+              <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_right,_rgba(99,102,241,0.14),_transparent_48%),radial-gradient(circle_at_bottom_left,_rgba(14,165,233,0.14),_transparent_44%)]" />
+              <main className="relative z-10 min-h-screen">{children}</main>
+            </div>
+          </ConfigProvider>
         </AntdRegistry>
       </body>
     </html>

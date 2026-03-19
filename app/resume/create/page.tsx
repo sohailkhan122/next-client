@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Button, Card, Col, Form, Input, Row, Select, Spin, message } from 'antd';
+import { Button, Card, Col, Form, Input, Row, Select, Skeleton, message } from 'antd';
 import {
     DeleteOutlined,
     FileTextOutlined,
@@ -365,8 +365,32 @@ export default function CreateResumePage() {
                             }}
                         >
                             {loading ? (
-                                <div className="flex items-center justify-center py-16">
-                                    <Spin size="large" />
+                                <div className="py-2">
+                                    <div className="mb-8 border-b border-slate-100 pb-5">
+                                        <Skeleton.Input active className="!h-7 !w-60 !max-w-full" />
+                                        <div className="mt-2"><Skeleton.Input active className="!h-4 !w-[34rem] !max-w-full" /></div>
+                                    </div>
+
+                                    <div className="space-y-8">
+                                        {Array.from({ length: 4 }).map((_, sectionIndex) => (
+                                            <div key={sectionIndex} className="space-y-4">
+                                                <Skeleton.Input active className="!h-5 !w-44" />
+                                                <Row gutter={14}>
+                                                    <Col xs={24} sm={12}><Skeleton.Input active className="!h-11 !w-full" /></Col>
+                                                    <Col xs={24} sm={12}><Skeleton.Input active className="!h-11 !w-full" /></Col>
+                                                </Row>
+                                                <Row gutter={14}>
+                                                    <Col xs={24} sm={12}><Skeleton.Input active className="!h-11 !w-full" /></Col>
+                                                    <Col xs={24} sm={12}><Skeleton.Input active className="!h-11 !w-full" /></Col>
+                                                </Row>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="mt-8 flex justify-end gap-3">
+                                        <Skeleton.Button active className="!h-10 !w-24" />
+                                        <Skeleton.Button active className="!h-10 !w-52" />
+                                    </div>
                                 </div>
                             ) : (
                                 <>

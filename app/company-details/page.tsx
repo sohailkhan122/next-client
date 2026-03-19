@@ -7,7 +7,7 @@ import {
   Input,
   Select,
   message,
-  Spin,
+  Skeleton,
 } from 'antd';
 import {
   BankOutlined,
@@ -119,8 +119,30 @@ export default function CompanyDetailsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Spin size="large" />
+      <div className="min-h-screen bg-linear-to-br from-slate-50 to-orange-50 flex items-stretch">
+        <div className="hidden md:flex w-[40%] bg-linear-to-br from-orange-600 to-red-600 p-10 lg:p-14 flex-col justify-center">
+          <Skeleton.Input active style={{ height: 32, width: 160 }} />
+          <div className="mt-8 space-y-4">
+            <Skeleton.Input active className="w-full" style={{ height: 40 }} />
+            <Skeleton.Input active style={{ height: 16, width: '83%' }} />
+            <Skeleton.Input active style={{ height: 16, width: '67%' }} />
+          </div>
+        </div>
+        <div className="flex-1 p-8 sm:p-12 md:p-14 lg:p-16">
+          <div className="mx-auto w-full max-w-150 rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
+            <Skeleton.Input active style={{ height: 32, width: 224 }} />
+            <div className="mt-2"><Skeleton.Input active className="max-w-full" style={{ height: 16, width: 320 }} /></div>
+            <div className="mt-8 space-y-4">
+              {Array.from({ length: 8 }).map((_, index) => (
+                <Skeleton.Input key={index} active className="w-full" style={{ height: 44 }} />
+              ))}
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <Skeleton.Button active style={{ height: 40, width: 96 }} />
+              <Skeleton.Button active style={{ height: 40, width: 160 }} />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

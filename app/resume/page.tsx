@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState, Suspense } from 'react';
-import { Spin, message } from 'antd';
+import { Skeleton, message } from 'antd';
 import {
   MailOutlined,
   PhoneOutlined,
@@ -18,6 +18,7 @@ import { pdf } from '@react-pdf/renderer';
 import { apiGetMe, type AuthUser } from '../lib/authApi';
 import { apiGetMyStudentDetail, apiGetStudentDetailByUserId } from '../lib/studentDetailApi';
 import ResumePdfDocument from './ResumePdfDocument';
+import { CardSkeleton } from '../components/skeletons';
 
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -195,8 +196,23 @@ function ResumePageContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <Spin size="large" />
+      <div className="min-h-screen bg-slate-100 px-2 py-4 sm:px-4 sm:py-8">
+        <div className="mx-auto mb-4 flex w-full max-w-3xl items-center justify-between rounded-xl border border-slate-200 bg-white/80 px-4 py-3 sm:px-6">
+          <Skeleton.Button active className="!h-8 !w-24" />
+          <Skeleton.Input active className="!h-5 !w-28" />
+          <div className="flex gap-2">
+            <Skeleton.Button active className="!h-9 !w-28" />
+            <Skeleton.Button active className="!h-9 !w-28" />
+          </div>
+        </div>
+        <div className="resume-page mx-auto w-full max-w-3xl overflow-hidden rounded-xl bg-white shadow-lg sm:rounded-2xl sm:shadow-2xl">
+          <div className="h-44 bg-slate-200/80 animate-pulse" />
+          <div className="space-y-6 px-4 py-5 sm:px-10 sm:py-8">
+            <CardSkeleton count={1} showHeader={false} showActions={false} />
+            <CardSkeleton count={1} showHeader={false} showActions={false} />
+            <CardSkeleton count={1} showHeader={false} showActions={false} />
+          </div>
+        </div>
       </div>
     );
   }
@@ -495,8 +511,22 @@ export default function ResumePage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-slate-50">
-          <Spin size="large" />
+        <div className="min-h-screen bg-slate-100 px-2 py-4 sm:px-4 sm:py-8">
+          <div className="mx-auto mb-4 flex w-full max-w-3xl items-center justify-between rounded-xl border border-slate-200 bg-white/80 px-4 py-3 sm:px-6">
+            <Skeleton.Button active className="!h-8 !w-24" />
+            <Skeleton.Input active className="!h-5 !w-28" />
+            <div className="flex gap-2">
+              <Skeleton.Button active className="!h-9 !w-28" />
+              <Skeleton.Button active className="!h-9 !w-28" />
+            </div>
+          </div>
+          <div className="resume-page mx-auto w-full max-w-3xl overflow-hidden rounded-xl bg-white shadow-lg sm:rounded-2xl sm:shadow-2xl">
+            <div className="h-44 bg-slate-200/80 animate-pulse" />
+            <div className="space-y-6 px-4 py-5 sm:px-10 sm:py-8">
+              <CardSkeleton count={1} showHeader={false} showActions={false} />
+              <CardSkeleton count={1} showHeader={false} showActions={false} />
+            </div>
+          </div>
         </div>
       }
     >

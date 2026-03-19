@@ -9,8 +9,8 @@ import {
   Empty,
   Input,
   Row,
+  Skeleton,
   Select,
-  Spin,
   Tag,
 } from 'antd';
 import {
@@ -26,6 +26,7 @@ import {
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import Navbar from '../components/Navbar';
+import { CardSkeleton } from '../components/skeletons';
 import { apiGetMe } from '../lib/authApi';
 import { apiGetAllJobs, type Job as ApiJob } from '../lib/jobsApi';
 import { apiGetMyStudentDetail } from '../lib/studentDetailApi';
@@ -198,8 +199,28 @@ export default function StudentPage() {
     return (
       <div className="page-bg">
         <Navbar title="Job Board" />
-        <div className="page-content flex items-center justify-center" style={{ minHeight: 400 }}>
-          <Spin size="large" />
+        <div className="page-content">
+          <div className="student-hero">
+            <Skeleton.Input active className="max-w-full" style={{ height: 40, width: 256 }} />
+            <div className="mt-3">
+              <Skeleton.Input active className="max-w-full" style={{ height: 20, width: 320 }} />
+            </div>
+            <div className="mt-5">
+              <Skeleton.Button active className="rounded-full" style={{ height: 46, width: 160 }} />
+            </div>
+          </div>
+
+          <div className="filters-bar">
+            <Skeleton.Input active className="w-full" style={{ height: 40 }} />
+            <Skeleton.Input active style={{ height: 40, width: 160 }} />
+            <Skeleton.Input active style={{ height: 40, width: 176 }} />
+          </div>
+
+          <div className="mb-5 mt-5">
+            <Skeleton.Input active className="max-w-full" style={{ height: 16, width: 288 }} />
+          </div>
+
+          <CardSkeleton count={6} />
         </div>
       </div>
     );

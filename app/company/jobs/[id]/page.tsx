@@ -6,7 +6,7 @@ import {
     Form,
     message,
     Modal,
-    Spin,
+    Skeleton,
     Tag,
 } from 'antd';
 import {
@@ -27,6 +27,7 @@ import { motion } from 'framer-motion';
 import { useRouter, useParams } from 'next/navigation';
 import Navbar from '../../../components/Navbar';
 import JobPostModal from '../../../components/JobPostModal';
+import { CardSkeleton } from '../../../components/skeletons';
 import { apiGetMe } from '../../../lib/authApi';
 import {
     apiGetJobById,
@@ -268,8 +269,40 @@ export default function CompanyJobDetailPage() {
         return (
             <div className="page-bg">
                 <Navbar title="Job Details" />
-                <div className="page-content flex items-center justify-center" style={{ minHeight: 400 }}>
-                    <Spin size="large" />
+                <div className="page-content mx-auto w-full" style={{ maxWidth: 860 }}>
+                    <div className="mb-5">
+                        <Skeleton.Button active className="!h-10 !w-44" />
+                    </div>
+
+                    <div className="mb-5 rounded-2xl border border-slate-100 bg-white p-6">
+                        <div className="flex items-start gap-4">
+                            <Skeleton.Avatar active size={56} shape="circle" />
+                            <div className="flex-1">
+                                <Skeleton.Input active className="!h-7 !w-72 !max-w-full" />
+                                <div className="mt-2"><Skeleton.Input active className="!h-4 !w-32" /></div>
+                                <div className="mt-3 flex gap-2">
+                                    <Skeleton.Button active size="small" className="!h-6 !w-20" />
+                                    <Skeleton.Button active size="small" className="!h-6 !w-20" />
+                                </div>
+                            </div>
+                            <Skeleton.Button active className="!h-10 !w-28" />
+                        </div>
+                    </div>
+
+                    <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                        {Array.from({ length: 4 }).map((_, index) => (
+                            <div key={index} className="rounded-2xl border border-slate-100 bg-white p-4">
+                                <Skeleton.Input active className="!h-3 !w-16" />
+                                <div className="mt-2"><Skeleton.Input active className="!h-4 !w-24" /></div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <CardSkeleton count={3} showHeader={false} showActions={false} />
+                    <div className="mt-5 flex justify-end gap-3">
+                        <Skeleton.Button active className="!h-10 !w-32" />
+                        <Skeleton.Button active className="!h-10 !w-32" />
+                    </div>
                 </div>
             </div>
         );

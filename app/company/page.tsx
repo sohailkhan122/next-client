@@ -11,7 +11,7 @@ import {
   Form,
   message,
   Row,
-  Spin,
+  Skeleton,
   Tag,
   Tooltip,
 } from 'antd';
@@ -30,6 +30,7 @@ import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import Navbar from '../components/Navbar';
 import JobPostModal from '../components/JobPostModal';
+import { CardSkeleton, ProfileSkeleton } from '../components/skeletons';
 import { apiGetMe, type AuthUser } from '../lib/authApi';
 import { apiGetMyCompanyDetail } from '../lib/companyDetailApi';
 import { apiCreateJob, apiUpdateJob, apiDeleteJob, apiGetMyJobs, type Job as ApiJob } from '../lib/jobsApi';
@@ -313,8 +314,18 @@ export default function CompanyPage() {
     return (
       <div className="page-bg">
         <Navbar title="Company Portal" />
-        <div className="page-content flex items-center justify-center" style={{ minHeight: 400 }}>
-          <Spin size="large" />
+        <div className="page-content">
+          <ProfileSkeleton className="mb-6" />
+          <div className="mb-5 flex items-center justify-between">
+            <div>
+              <Skeleton.Input active style={{ height: 24, width: 160 }} />
+              <div className="mt-2">
+                <Skeleton.Input active style={{ height: 16, width: 112 }} />
+              </div>
+            </div>
+            <Skeleton.Button active style={{ height: 40, width: 144 }} />
+          </div>
+          <CardSkeleton count={4} />
         </div>
       </div>
     );

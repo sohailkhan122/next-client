@@ -1,6 +1,6 @@
 'use client';
 import { useState, Suspense } from 'react';
-import { Button, Form, Input, Alert } from 'antd';
+import { Button, Form, Input, Alert, Skeleton } from 'antd';
 import { LockOutlined, SolutionOutlined, CheckCircleOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { motion, type Variants } from 'framer-motion';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -225,7 +225,17 @@ export default function ResetPasswordPage() {
           initial="hidden"
           animate="visible"
         >
-          <Suspense fallback={<div>Loading…</div>}>
+          <Suspense
+            fallback={
+              <div className="space-y-4">
+                <Skeleton.Input active className="!h-8 !w-56 !max-w-full" />
+                <Skeleton.Input active className="!h-4 !w-80 !max-w-full" />
+                <Skeleton.Input active className="!h-11 !w-full" />
+                <Skeleton.Input active className="!h-11 !w-full" />
+                <Skeleton.Button active className="!h-11 !w-full" />
+              </div>
+            }
+          >
             <ResetPasswordForm />
           </Suspense>
         </motion.div>
