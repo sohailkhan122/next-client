@@ -106,6 +106,7 @@ export default function StudentPage() {
   const [filtered, setFiltered] = useState<Job[]>([]);
   const [requiredJob, setRequiredJob] = useState('');
   const [requiredField, setRequiredField] = useState('');
+  const [showRelevantOnly, setShowRelevantOnly] = useState(true);
 
   useEffect(() => {
     const load = async () => {
@@ -168,14 +169,11 @@ export default function StudentPage() {
 
   useEffect(() => {
     let result = [...allJobs];
-    const hasStudentPreference = Boolean(requiredJob.trim() || requiredField.trim());
-    const isDefaultView = !search.trim() && typeFilter === 'all' && categoryFilter === 'all';
 
-    if (isDefaultView && hasStudentPreference) {
-      const relevantOnly = result.filter((job) => job.relevanceScore > 0);
-      if (relevantOnly.length > 0) {
-        result = relevantOnly;
-      }
+    // Filter strictly by preference ONLY if we haven't interacted with filters yet
+    if (showRelevantOnly && requiredJob.trim()) {
+      const q = requiredJob.toLowerCase();
+      result = result.filter((j) => j.title.toLowerCase().includes(q));
     }
 
     if (search.trim()) {
@@ -194,6 +192,21 @@ export default function StudentPage() {
   }, [search, typeFilter, categoryFilter, allJobs, requiredJob, requiredField]);
 
   const categories = Array.from(new Set(allJobs.map((j) => j.category)));
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value);
+    setShowRelevantOnly(false);
+  };
+
+  const handleTypeChange = (value: string) => {
+    setTypeFilter(value);
+    setShowRelevantOnly(false);
+  };
+
+  const handleCategoryChange = (value: string) => {
+    setCategoryFilter(value);
+    setShowRelevantOnly(false);
+  };
 
   if (loading) {
     return (
@@ -268,14 +281,14 @@ export default function StudentPage() {
             placeholder="Search job title, company, location…"
             size="large"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={handleSearchChange}
             style={{ flex: 1, minWidth: 220, borderRadius: 10 }}
             allowClear
           />
           <Select
             size="large"
             value={typeFilter}
-            onChange={setTypeFilter}
+            onChange={handleTypeChange}
             style={{ width: 160 }}
           >
             <Option value="all">All Types</Option>
@@ -286,7 +299,7 @@ export default function StudentPage() {
           <Select
             size="large"
             value={categoryFilter}
-            onChange={setCategoryFilter}
+            onChange={handleCategoryChange}
             style={{ width: 180 }}
           >
             <Option value="all">All Categories</Option>
@@ -359,7 +372,7 @@ export default function StudentPage() {
                           {job.companyName.charAt(0)}
                         </div>
                         <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                          {job.relevanceScore > 0 && (
+                          {requiredJob && job.title.toLowerCase().includes(requiredJob.toLowerCase()) && (
                             <Tag color="geekblue" style={{ borderRadius: 20, fontWeight: 700 }}>
                               Relevant
                             </Tag>

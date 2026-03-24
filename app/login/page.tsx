@@ -12,7 +12,6 @@ import { motion, type Variants } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { apiLogin } from '../lib/authApi';
 import Link from 'next/link';
-import { Console } from 'console';
 
 const stats = [
   { value: '50K+', label: 'Active Jobs' },
@@ -69,6 +68,11 @@ export default function LoginPage() {
 
       await new Promise((r) => setTimeout(r, 500));
 
+      if (user.role !== 'admin' && user.isApproved === false) {
+        router.replace('/pending');
+        return;
+      }
+
       // Admin directly dashboard
       if (user.role === "admin") {
          router.replace("/admin");
@@ -82,17 +86,12 @@ export default function LoginPage() {
         router.replace("/student");
       }
 
-    } catch (err: any) {
-  const message = err.response?.data?.message;
-  console.log("Login error:", err.response);
- 
-
-  // const serverMessage = axiosErr?.response?.data?.message;
-
-  // console.log("Login error:",axiosErr.response );
-
-  setError(message || "Something went wrong");
-} finally {
+    } catch (err: unknown) {
+      const maybeAxiosError = err as { response?: { data?: { message?: string } } };
+      const loginErrorMessage = maybeAxiosError.response?.data?.message;
+      console.log('Login error:', maybeAxiosError.response);
+      setError(loginErrorMessage || 'Something went wrong');
+    } finally {
       setLoading(false);
     }
   };

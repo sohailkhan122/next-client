@@ -53,7 +53,15 @@ export default function MessagesPage() {
 
   const loadConversations = useCallback(async () => {
     try {
-      const [user, convs] = await Promise.all([apiGetMe(), apiGetConversations()]);
+      const user = await apiGetMe();
+
+      if (user.role !== 'admin' && user.isApproved === false) {
+        router.replace('/pending');
+        return;
+      }
+
+      const convs = await apiGetConversations();
+
       setMe(user);
       setConversations(convs);
     } catch {

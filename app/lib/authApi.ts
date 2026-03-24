@@ -21,6 +21,7 @@ export interface AuthUser {
   email: string;
   role: 'admin' | 'company' | 'student';
   status: 'pending' | 'approved' | 'rejected' | 'blocked';
+  isApproved?: boolean;
   profileCompleted: boolean;
   company?: string;
   createdAt: string;

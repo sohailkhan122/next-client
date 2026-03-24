@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 // Decode JWT payload
-function getJwtPayload(token: string): { role?: string; profileCompleted?: boolean } | null {
+function getJwtPayload(token: string): { role?: string; isApproved?: boolean; profileCompleted?: boolean } | null {
   try {
     const parts = token.split(".");
     if (parts.length !== 3) return null;
@@ -28,8 +28,9 @@ export function proxy(request: NextRequest) {
   console.log(`[Proxy] Incoming request: ${pathname} | Token Payload:`, payload);
 
   const role = payload?.role ?? null;
+  const isApproved = payload?.isApproved;
   const profileCompleted = payload?.profileCompleted ;
-  console.log(`[Proxy] ${pathname} | Role: ${role} | Profile Completed: ${profileCompleted}`);
+  console.log(`[Proxy] ${pathname} | Role: ${role} | Approved: ${isApproved} | Profile Completed: ${profileCompleted}`);
 
   // ─── NOT logged in ───
   if (!role) {
@@ -37,11 +38,29 @@ export function proxy(request: NextRequest) {
       pathname.startsWith("/admin") ||
       pathname.startsWith("/company") ||
       pathname.startsWith("/student") ||
-      pathname.startsWith("/company-details")
+      pathname.startsWith("/company-details") ||
+      pathname.startsWith("/messages") ||
+      pathname.startsWith("/profile") ||
+      pathname.startsWith("/resume") ||
+      pathname.startsWith("/applicants") ||
+      pathname.startsWith('/pending')
     ) {
       return NextResponse.redirect(new URL("/login", request.url));
     }
     return NextResponse.next();
+  }
+
+  // Non-admin users must wait on /pending until approved
+  if (role !== 'admin' && isApproved === false) {
+    if (!pathname.startsWith('/pending')) {
+      return NextResponse.redirect(new URL('/pending', request.url));
+    }
+    return NextResponse.next();
+  }
+
+  // Approved users should not stay on pending page
+  if (pathname.startsWith('/pending')) {
+    return NextResponse.redirect(new URL(`/${role}`, request.url));
   }
 
   // ─── Block login/register if already logged in ───
@@ -87,6 +106,11 @@ export const config = {
     "/company/:path*",
     "/company-details",
     "/student/:path*",
+    "/messages/:path*",
+    "/profile/:path*",
+    "/resume/:path*",
+    "/applicants/:path*",
+    "/pending",
     "/login",
     "/register",
   ],

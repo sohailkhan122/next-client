@@ -45,6 +45,13 @@ export default function ChatPage() {
   const [messageApi, contextHolder] = message.useMessage();
   const bottomRef = useRef<HTMLDivElement>(null);
 
+  const upsertMessage = useCallback((prev: ChatMessage[], incoming: ChatMessage): ChatMessage[] => {
+    const filtered = prev.filter((m) => m._id !== incoming._id);
+    return [...filtered, incoming].sort(
+      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    );
+  }, []);
+
   const fetchMessages = useCallback(async () => {
     try {
       const msgs = await apiGetMessages(conversationId);
@@ -55,9 +62,19 @@ export default function ChatPage() {
   }, [conversationId]);
 
   useEffect(() => {
+    let socketCleanup: (() => void) | null = null;
+
     const init = async () => {
       try {
-        const [user, convs] = await Promise.all([apiGetMe(), apiGetConversations()]);
+        const user = await apiGetMe();
+
+        if (user.role !== 'admin' && user.isApproved === false) {
+          router.replace('/pending');
+          return;
+        }
+
+        const convs = await apiGetConversations();
+
         setMe(user);
         const conv = convs.find((c: Conversation) => c._id === conversationId) ?? null;
         setConversation(conv);
@@ -66,12 +83,41 @@ export default function ChatPage() {
         const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') || undefined : undefined;
         const socket = initializeSocket(token, (newMessage: ChatMessage) => {
           if (newMessage.conversationId === conversationId) {
-            setMessages((prev) => [...prev.filter(m => m._id !== newMessage._id), newMessage]);
+            setMessages((prev) => upsertMessage(prev, newMessage));
           }
         });
+
+        const handleUpdatedMessage = (updatedMessage: ChatMessage) => {
+          if (updatedMessage.conversationId === conversationId) {
+            setMessages((prev) => prev.map((m) => (m._id === updatedMessage._id ? updatedMessage : m)));
+            setSelectedMessage((prev) =>
+              prev && prev._id === updatedMessage._id ? updatedMessage : prev,
+            );
+          }
+        };
+
+        const handleDeletedMessage = (deletedMessageId: string) => {
+          setMessages((prev) => prev.filter((m) => m._id !== deletedMessageId));
+          setSelectedMessage((prev) => {
+            if (prev && prev._id === deletedMessageId) {
+              setMessageModalOpen(false);
+              return null;
+            }
+            return prev;
+          });
+        };
+
         const joinRoom = () => socket.emit('joinConversation', conversationId);
         socket.on('connect', joinRoom);
+        socket.on('messageUpdated', handleUpdatedMessage);
+        socket.on('messageDeleted', handleDeletedMessage);
         if (socket.connected) joinRoom();
+
+        socketCleanup = () => {
+          socket.off('connect', joinRoom);
+          socket.off('messageUpdated', handleUpdatedMessage);
+          socket.off('messageDeleted', handleDeletedMessage);
+        };
 
       } catch {
         router.replace('/login');
@@ -82,8 +128,11 @@ export default function ChatPage() {
     };
     init();
 
-    return () => disconnectSocket();
-  }, [conversationId, router, fetchMessages]);
+    return () => {
+      if (socketCleanup) socketCleanup();
+      disconnectSocket();
+    };
+  }, [conversationId, router, fetchMessages, upsertMessage]);
   // Auto-scroll to bottom when messages change
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });

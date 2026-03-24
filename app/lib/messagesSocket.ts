@@ -2,7 +2,10 @@ import { io, Socket } from 'socket.io-client';
 
 let socket: Socket | null = null;
 
-export const initializeSocket = (token: string | undefined, onMessage: (message: any) => void) => {
+export const initializeSocket = <T>(
+  token: string | undefined,
+  onMessage: (message: T) => void,
+) => {
   if (socket) {
     socket.disconnect();
   }
@@ -19,7 +22,7 @@ export const initializeSocket = (token: string | undefined, onMessage: (message:
     reconnection: true,
   });
 
-  socket.on('newMessage', (message: any) => {
+  socket.on('newMessage', (message: T) => {
     onMessage(message);
   });
 

@@ -65,6 +65,7 @@ export default function AdminDashboard() {
   const router = useRouter();
   const [users, setUsers] = useState<AuthUser[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [messageApi, contextHolder] = message.useMessage();
 
   const fetchData = async () => {
@@ -90,22 +91,28 @@ export default function AdminDashboard() {
   }, []);
 
   const approveUser = async (id: string) => {
+    setActionLoading(id);
     try {
       await updateUserStatus(id, 'approved');
       setUsers((prev) => prev.map((u) => (u._id === id || u.id === id) ? { ...u, status: 'approved' as const } : u));
       messageApi.success('User approved successfully!');
     } catch {
       messageApi.error('Failed to approve user.');
+    } finally {
+      setActionLoading(null);
     }
   };
 
   const rejectUser = async (id: string) => {
+    setActionLoading(id);
     try {
       await updateUserStatus(id, 'blocked');
       setUsers((prev) => prev.map((u) => (u._id === id || u.id === id) ? { ...u, status: 'blocked' as const } : u));
       messageApi.warning('User blocked.');
     } catch {
       messageApi.error('Failed to block user.');
+    } finally {
+      setActionLoading(null);
     }
   };
 
@@ -176,6 +183,7 @@ export default function AdminDashboard() {
                   type="primary"
                   shape="round"
                   size="small"
+                  loading={actionLoading === (record._id || record.id)}
                   icon={<CheckCircleOutlined />}
                   className="border-emerald-500! bg-emerald-500! font-semibold!"
                   onClick={() => approveUser(record._id || record.id)}
@@ -195,6 +203,7 @@ export default function AdminDashboard() {
                   danger
                   shape="round"
                   size="small"
+                  loading={actionLoading === (record._id || record.id)}
                   icon={<CloseCircleOutlined />}
                   className="font-semibold"
                 >

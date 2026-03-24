@@ -92,7 +92,12 @@ export default function RegisterPage() {
           <span className="brand-name">JobBridge</span>
         </motion.div>
 
-        <motion.div variants={containerVariants} initial="hidden" animate="visible" style={{ zIndex: 1, display: 'flex', flexDirection: 'column', gap: 24, flex: 1 }}>
+        <motion.div
+          className="auth-hero register-hero"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
           <motion.h1 variants={itemVariants} className="hero-title">
             Join<br />
             <span className="hero-accent">JobBridge</span><br />
@@ -114,7 +119,7 @@ export default function RegisterPage() {
             ))}
           </motion.div>
 
-          <motion.div variants={itemVariants} className="testimonial-card" style={{ marginTop: 'auto' }}>
+          <motion.div variants={itemVariants} className="testimonial-card register-testimonial">
             <p className="testimonial-quote">
               &ldquo;JobBridge helped me land my first full-time role in just 3 weeks. The process was seamless!&rdquo;
             </p>

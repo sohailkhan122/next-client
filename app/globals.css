@@ -51,7 +51,7 @@ body {
 .auth-root {
   display: flex;
   min-height: 100vh;
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
 /* ── Left panel ── */
@@ -312,8 +312,8 @@ body {
 }
 
 .register-right {
-  align-items: flex-start;
-  padding-top: 52px;
+  align-items: center;
+  padding-top: 48px;
 }
 
 .auth-card {
@@ -330,6 +330,14 @@ body {
 
 .register-card {
   max-width: 520px;
+}
+
+.register-hero {
+  z-index: 1;
+}
+
+.register-testimonial {
+  margin-top: auto;
 }
 
 /* Card header */
@@ -504,17 +512,35 @@ body {
 @media (max-width: 900px) {
   .auth-root {
     flex-direction: column;
+    min-height: 100dvh;
   }
 
   .auth-left {
     flex: none;
-    padding: 36px 28px;
+    padding: 28px 20px;
     min-height: auto;
-    gap: 20px;
+    gap: 16px;
   }
 
   .hero-title {
     font-size: 30px;
+  }
+
+  .register-hero {
+    gap: 16px;
+  }
+
+  .steps-list {
+    gap: 14px;
+  }
+
+  .step-item {
+    gap: 12px;
+  }
+
+  .step-number {
+    width: 36px;
+    height: 36px;
   }
 
   .stats-row {
@@ -522,15 +548,85 @@ body {
   }
 
   .auth-right {
-    padding: 32px 20px 48px;
+    padding: 20px 16px 32px;
   }
 
   .register-right {
-    padding-top: 32px;
+    align-items: center;
+    padding-top: 0;
   }
 
   .auth-card {
-    padding: 32px 24px;
+    max-width: 640px;
+    padding: 30px 22px;
+  }
+}
+
+@media (max-width: 640px) {
+  .auth-left {
+    padding: 24px 16px 20px;
+  }
+
+  .brand-name {
+    font-size: 20px;
+  }
+
+  .hero-title {
+    font-size: clamp(30px, 8vw, 36px);
+    line-height: 1.1;
+  }
+
+  .hero-subtitle {
+    max-width: 100%;
+    font-size: 14px;
+  }
+
+  .steps-list,
+  .register-testimonial,
+  .deco-circle {
+    display: none;
+  }
+
+  .auth-right {
+    padding: 14px 10px 20px;
+  }
+
+  .register-right {
+    padding-top: 0;
+  }
+
+  .auth-card {
+    border-radius: 16px;
+    padding: 22px 14px;
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.05),
+      0 6px 18px rgba(99, 102, 241, 0.12);
+  }
+
+  .card-header {
+    margin-bottom: 18px;
+  }
+
+  .card-title {
+    font-size: 22px;
+  }
+
+  .card-subtitle {
+    font-size: 13.5px;
+  }
+
+  .submit-btn {
+    height: 46px !important;
+    font-size: 14.5px !important;
+  }
+
+  .ant-form-item {
+    margin-bottom: 14px !important;
+  }
+
+  .switch-text {
+    margin-top: 16px;
+    font-size: 13px;
   }
 }
 

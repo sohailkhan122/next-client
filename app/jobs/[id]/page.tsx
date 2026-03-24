@@ -188,7 +188,7 @@ export default function JobDetailPage() {
             {Array.from({ length: 6 }).map((_, index) => (
               <Col xs={12} sm={8} md={4} key={index}>
                 <div className="jd-info-chip">
-                  <Skeleton.Input active style={{ height: 12, width: 64 }} />
+                  <Skeleton.Input active style={{ height: 12, width: 32 }} />
                   <div className="mt-2"><Skeleton.Input active style={{ height: 16, width: 48 }} /></div>
                 </div>
               </Col>
@@ -198,6 +198,9 @@ export default function JobDetailPage() {
           <Row gutter={[24, 24]}>
             <Col xs={24} lg={16}>
               <CardSkeleton count={1} showHeader={false} showActions={false} />
+               <CardSkeleton count={1} showHeader={false} showActions={false} />
+                <CardSkeleton count={1} showHeader={false} showActions={false} />
+               <CardSkeleton count={1} showHeader={false} showActions={false} />
             </Col>
             <Col xs={24} lg={8}>
               <CardSkeleton count={2} showHeader={false} />

@@ -600,7 +600,6 @@ export default function CreateResumePage() {
                                                             <Form.Item
                                                                 name={[field.name, 'title']}
                                                                 label="Project Name"
-                                                                rules={[{ required: true, message: 'Required' }]}
                                                             >
                                                                 <Input size="large" placeholder="e.g. Job Portal Web App" />
                                                             </Form.Item>
@@ -645,7 +644,7 @@ export default function CreateResumePage() {
                                                                         </Button>
                                                                     </div>
                                                                 }
-                                                                rules={[{ required: true, message: 'Required' }]}
+                                                                // rules={[{ required: true, message: 'Required' }]}
                                                                 style={{ marginBottom: 0 }}
                                                             >
                                                                 <Input.TextArea rows={3} placeholder="Describe what you built and your contribution..." />

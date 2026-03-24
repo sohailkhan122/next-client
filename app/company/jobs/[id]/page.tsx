@@ -29,6 +29,7 @@ import Navbar from '../../../components/Navbar';
 import JobPostModal from '../../../components/JobPostModal';
 import { CardSkeleton } from '../../../components/skeletons';
 import { apiGetMe } from '../../../lib/authApi';
+import { apiGetMyCompanyDetail } from '../../../lib/companyDetailApi';
 import {
     apiGetJobById,
     apiUpdateJob,
@@ -83,8 +84,14 @@ export default function CompanyJobDetailPage() {
 
     useEffect(() => {
         const load = async () => {
+            let myCompanyName = '';
             try {
-                await apiGetMe();
+                const [me, companyDetail] = await Promise.all([
+                    apiGetMe(),
+                    apiGetMyCompanyDetail().catch(() => null),
+                ]);
+                // Prefer profile company name from company details API.
+                myCompanyName = companyDetail?.companyName?.trim() || me.company?.trim() || '';
             } catch {
                 router.replace('/login');
                 return;
@@ -94,7 +101,7 @@ export default function CompanyJobDetailPage() {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const companyObj = apiJob.companyId as any;
                 const companyName: string =
-                    companyObj?.name ?? companyObj?.company ?? companyObj?.email ?? 'My Company';
+                    myCompanyName || companyObj?.companyName || companyObj?.company || 'Company';
                 setJob({
                     id: apiJob._id,
                     title: apiJob.title,
@@ -309,7 +316,7 @@ export default function CompanyJobDetailPage() {
     }
 
     if (!job) return null;
-
+console.log(job);
     return (
         <div className="page-bg">
             {contextHolder}
