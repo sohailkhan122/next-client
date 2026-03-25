@@ -14,8 +14,10 @@ export interface ChatMessage {
   conversationId: string;
   senderId: string | MessageParticipant;
   content: string;
+  isRead: boolean;
   createdAt: string;
   updatedAt?: string;
+  isSending?: boolean;
 }
 
 export interface Conversation {
@@ -24,6 +26,7 @@ export interface Conversation {
   lastMessage: string | null;
   lastMessageSenderId?: string | MessageParticipant | null;
   lastMessageAt: string | null;
+  unreadCount?: number;
   createdAt: string;
   updatedAt: string;
 }

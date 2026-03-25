@@ -13,7 +13,7 @@ import { motion } from 'framer-motion';
 import { useRouter, useParams } from 'next/navigation';
 import Navbar from '../../components/Navbar';
 import { apiGetMe, type AuthUser } from '../../lib/authApi';
-import { initializeSocket, disconnectSocket, getSocket } from '../../lib/messagesSocket';
+import { initializeSocket, disconnectSocket } from '../../lib/messagesSocket';
 import {
   apiDeleteMessage,
   apiGetMessages,
@@ -84,6 +84,10 @@ export default function ChatPage() {
         const socket = initializeSocket(token, (newMessage: ChatMessage) => {
           if (newMessage.conversationId === conversationId) {
             setMessages((prev) => upsertMessage(prev, newMessage));
+            // Mark as read immediately when receiving new message in active chat
+            if (socket && socket.connected) {
+               socket.emit('mark_as_read', conversationId);
+            }
           }
         });
 
@@ -107,16 +111,34 @@ export default function ChatPage() {
           });
         };
 
-        const joinRoom = () => socket.emit('joinConversation', conversationId);
+        const handleMessagesRead = ({ conversationId: id }: { conversationId: string }) => {
+          if (id === conversationId) {
+             setMessages((prev) => prev.map((m) => ({ ...m, isRead: true })));
+          }
+        };
+
+        const joinRoom = () => {
+           if (conversationId) {
+             socket.emit('joinConversation', conversationId);
+             socket.emit('mark_as_read', conversationId);
+           }
+        };
+        
         socket.on('connect', joinRoom);
         socket.on('messageUpdated', handleUpdatedMessage);
         socket.on('messageDeleted', handleDeletedMessage);
-        if (socket.connected) joinRoom();
+        socket.on('messagesRead', handleMessagesRead);
+        
+        // If already connected when effect runs (re-renders), join manually
+        if (socket.connected) {
+           joinRoom();
+        }
 
         socketCleanup = () => {
           socket.off('connect', joinRoom);
           socket.off('messageUpdated', handleUpdatedMessage);
           socket.off('messageDeleted', handleDeletedMessage);
+          socket.off('messagesRead', handleMessagesRead);
         };
 
       } catch {
@@ -156,18 +178,8 @@ export default function ChatPage() {
     setSending(true);
     setInput('');
     try {
-      const socket = getSocket();
-      if (socket && socket.connected) {
-        // Emit via WebSocket
-        socket.emit('sendMessage', {
-          conversationId,
-          content: text
-        });
-      } else {
-        // Fallback
-        await apiSendMessage(conversationId, text);
-        await fetchMessages();
-      }
+      const created = await apiSendMessage(conversationId, text);
+      setMessages((prev) => upsertMessage(prev, created));
     } catch {
       setInput(text); // restore on failure
     } finally {

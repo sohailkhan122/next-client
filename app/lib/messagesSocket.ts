@@ -9,14 +9,26 @@ export const initializeSocket = <T>(
   if (socket) {
     socket.disconnect();
   }
-  const url = (process.env.NEXT_PUBLIC_SOCKET_URL || process.env.NEXT_PUBLIC_API_URL || '').replace(/\/$/, '');
+  const configuredUrl = (
+    process.env.NEXT_PUBLIC_SOCKET_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    ''
+  ).replace(/\/$/, '');
 
-  if (!url) {
-    throw new Error('Socket URL is not configured');
+  const url =
+    configuredUrl ||
+    (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3001');
+
+  if (!configuredUrl) {
+    console.warn('Socket URL is missing, using fallback URL:', url);
   }
 
+  // If token is not provided, try to get from localStorage (sometimes user saves it there)
+  // or rely on cookies (withCredentials: true)
+  const auth = token ? { token } : undefined;
+
   socket = io(url, {
-    auth: token ? { token } : undefined,
+    auth,
     withCredentials: true,
     transports: ['websocket', 'polling'],
     reconnection: true,

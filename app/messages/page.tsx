@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { Avatar, Button, Empty, Skeleton } from 'antd';
+import { Avatar, Button, Empty, Skeleton, Badge } from 'antd';
 import { ArrowLeftOutlined, MessageOutlined, UserOutlined } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import Navbar from '../components/Navbar';
 import { ListSkeleton } from '../components/skeletons';
 import { apiGetMe, type AuthUser } from '../lib/authApi';
+import { initializeSocket, disconnectSocket } from '../lib/messagesSocket';
 import {
   apiGetConversations,
   type Conversation,
@@ -73,6 +74,43 @@ export default function MessagesPage() {
 
   useEffect(() => {
     loadConversations();
+
+    const token =
+      typeof window !== 'undefined'
+        ? localStorage.getItem('accessToken') || undefined
+        : undefined;
+    const socket = initializeSocket(token, () => {});
+
+    const handleUpdate = (updatedData: any) => {
+      setConversations((prev) => {
+        const index = prev.findIndex((c) => c._id === updatedData._id);
+        if (index > -1) {
+          const updatedConv = { ...prev[index], ...updatedData };
+          const others = prev.filter((_, i) => i !== index);
+          return [updatedConv, ...others];
+        }
+        return prev;
+      });
+    };
+
+    const handleRead = (data: { _id: string }) => {
+      setConversations((prev) =>
+        prev.map((c) => (c._id === data._id ? { ...c, unreadCount: 0 } : c)),
+      );
+    };
+
+    if (socket) {
+      socket.on('conversationUpdated', handleUpdate);
+      socket.on('conversationRead', handleRead);
+    } // Ensure socket exists before attaching
+
+    return () => {
+      if (socket) {
+        socket.off('conversationUpdated', handleUpdate);
+        socket.off('conversationRead', handleRead);
+      }
+      disconnectSocket();
+    };
   }, [loadConversations]);
 
   const getOtherParticipant = (conv: Conversation): MessageParticipant | null => {
@@ -166,12 +204,14 @@ export default function MessagesPage() {
                       onClick={() => router.push(`/messages/${conv._id}`)}
                       className="group flex items-center gap-4 px-5 py-4 bg-white rounded-[20px] border border-slate-200 cursor-pointer transition-all duration-300 hover:shadow-[0_10px_30px_-10px_rgba(99,102,241,0.2)] hover:border-indigo-300 hover:-translate-y-0.5"
                     >
-                      <Avatar
-                        size={52}
-                        icon={<UserOutlined />}
-                        className="shadow-md shadow-indigo-100/50 shrink-0 border-2 border-white"
-                        style={{ background: 'linear-gradient(135deg, #818cf8 0%, #4f46e5 100%)' }}
-                      />
+                      <Badge count={conv.unreadCount} offset={[-6, 6]}>
+                        <Avatar
+                          size={52}
+                          icon={<UserOutlined />}
+                          className="shadow-md shadow-indigo-100/50 shrink-0 border-2 border-white"
+                          style={{ background: 'linear-gradient(135deg, #818cf8 0%, #4f46e5 100%)' }}
+                        />
+                      </Badge>
                       <div className="flex-1 min-w-0">
                         <div className="font-extrabold text-slate-800 text-[15px] sm:text-base truncate group-hover:text-indigo-600 transition-colors">
                           {name}

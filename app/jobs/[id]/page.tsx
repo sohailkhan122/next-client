@@ -198,9 +198,9 @@ export default function JobDetailPage() {
           <Row gutter={[24, 24]}>
             <Col xs={24} lg={16}>
               <CardSkeleton count={1} showHeader={false} showActions={false} />
-               <CardSkeleton count={1} showHeader={false} showActions={false} />
-                <CardSkeleton count={1} showHeader={false} showActions={false} />
-               <CardSkeleton count={1} showHeader={false} showActions={false} />
+              <CardSkeleton count={1} showHeader={false} showActions={false} />
+              <CardSkeleton count={1} showHeader={false} showActions={false} />
+              <CardSkeleton count={1} showHeader={false} showActions={false} />
             </Col>
             <Col xs={24} lg={8}>
               <CardSkeleton count={2} showHeader={false} />
@@ -372,22 +372,32 @@ export default function JobDetailPage() {
                   </p>
                   {applied ? (
                     <Button
-                      block
                       size="large"
                       icon={<MessageOutlined />}
                       loading={messagingCompany}
                       onClick={handleMessageCompany}
-                      style={{ borderRadius: 10, background: '#eff6ff', color: '#3b82f6', borderColor: '#bfdbfe', fontWeight: 700 }}
+                      style={{ borderRadius: 12, background: '#eff6ff', color: '#3b82f6', borderColor: '#bfdbfe', fontWeight: 700, height: 48, padding: '0 28px' }}
                     >
-                      Message Company
+                      Message
+                    </Button>
+                  ) : !authUser?.profileCompleted ? (
+                    <Button
+                      type="primary"
+                      size="large"
+                      icon={<SendOutlined />}
+                      // className="submit-btn"
+                      style={{ height: 48, fontSize: 12, padding: '0 28px', width: 'auto' }}
+                      onClick={() => router.push('/resume/create')}
+                    >
+                      Please Create Resume
                     </Button>
                   ) : (
                     <Button
                       type="primary"
-                      block
                       size="large"
                       icon={<SendOutlined />}
-                      className="submit-btn"
+                      // className="submit-btn"
+                      style={{ height: 48, fontSize: 12, padding: '0 28px', width: 'auto' }}
                       onClick={() => setApplyModal(true)}
                     >
                       Apply Now

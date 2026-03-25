@@ -154,7 +154,7 @@ export default function CompanyDetailsPage() {
         initial={{ opacity: 0, x: -50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6, ease: 'easeOut' }}
-        className="hidden md:flex w-[40%] bg-gradient-to-br from-orange-600 to-red-600 p-10 lg:p-14 flex-col justify-center text-white"
+        className="hidden md:flex w-[40%] h-[100vh] bg-gradient-to-br from-orange-600 to-red-600 p-10 lg:p-14 flex-col justify-center text-white"
       >
         <motion.div
           className="flex items-center gap-3 mb-12"
@@ -212,13 +212,13 @@ export default function CompanyDetailsPage() {
         initial={{ opacity: 0, x: 50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6, ease: 'easeOut' }}
-        className="flex-1 p-8 sm:p-12 md:p-14 lg:p-16 overflow-y-auto flex flex-col justify-center"
+        className="h-[100vh] flex-1 p-8 sm:p-12 md:p-14 lg:p-16 overflow-y-auto flex flex-col justify-center"
       >
         <motion.div
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="max-w-[600px] w-full mx-auto"
+          className="max-w-[600px] w-full mx-auto !pt-16"
         >
           <motion.h2
             variants={itemVariants}
