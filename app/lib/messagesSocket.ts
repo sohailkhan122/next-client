@@ -9,11 +9,7 @@ export const initializeSocket = <T>(
   if (socket) {
     socket.disconnect();
   }
-  const configuredUrl = (
-    process.env.NEXT_PUBLIC_SOCKET_URL ||
-    process.env.NEXT_PUBLIC_API_URL ||
-    ''
-  ).replace(/\/$/, '');
+  const configuredUrl = (process.env.NEXT_PUBLIC_API_URL ?? '').replace(/\/$/, '');
 
   const url =
     configuredUrl ||
