@@ -17,10 +17,15 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "JobBridge – Find Your Dream Job",
-    template: "%s | JobBridge",
+    default: "Job Bridge - Find Your Dream Job",
+    template: "%s | Job Bridge",
   },
   description: "The modern job portal connecting talent with opportunity.",
+  icons: {
+    icon: "/jobbridge-logo.svg",
+    shortcut: "/jobbridge-logo.svg",
+    apple: "/jobbridge-logo.svg",
+  },
 };
 
 export default function RootLayout({

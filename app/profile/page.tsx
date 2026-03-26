@@ -40,6 +40,23 @@ import { apiGetAllJobs, Job, Applicant } from '../lib/jobsApi';
 
 const { Option } = Select;
 
+const PAKISTAN_LOCATIONS = [
+  'Karachi - Shahrah-e-Faisal',
+  'Karachi - Gulshan-e-Iqbal',
+  'Karachi - DHA',
+  'Lahore - Gulberg',
+  'Lahore - Johar Town',
+  'Islamabad - Blue Area',
+  'Islamabad - G-10',
+  'Rawalpindi - Saddar',
+  'Faisalabad - D Ground',
+  'Peshawar - University Road',
+  'Multan - Cantt',
+  'Hyderabad - Latifabad',
+];
+
+const COUNTRY_CODES = ['+92', '+91', '+880', '+971', '+966', '+974', '+44', '+1', '+61'];
+
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.45 } },
@@ -81,6 +98,23 @@ function ProfileContent() {
   const [saving, setSaving] = useState(false);
   const [form] = Form.useForm();
 
+  const splitPhone = (rawPhone?: string) => {
+    const value = (rawPhone ?? '').trim();
+    if (!value) {
+      return { code: '+92', number: '' };
+    }
+
+    const match = value.match(/^(\+\d{1,4})\s*(.*)$/);
+    if (!match) {
+      return { code: '+92', number: value };
+    }
+
+    return {
+      code: match[1],
+      number: match[2] ?? '',
+    };
+  };
+
   useEffect(() => {
     const load = async () => {
       try {
@@ -116,22 +150,26 @@ function ProfileContent() {
   
   const openEdit = () => {
     if (user?.role === 'company') {
+      const companyPhone = splitPhone(detail?.contactPhone);
       form.setFieldsValue({
         name: user?.name || '',
         companyName: detail?.companyName || user?.company || '',
         industry: detail?.industry || '',
         foundedYear: detail?.foundedYear || '',
         website: detail?.website || '',
-        location: detail?.location || detail?.address || '',
+        location: detail?.location || detail?.address || 'Karachi - Shahrah-e-Faisal',
         description: detail?.description || '',
-        contactPhone: detail?.phone || '',
+        contactPhoneCode: companyPhone.code,
+        contactPhoneNumber: companyPhone.number,
         contactEmail: detail?.contactEmail || user?.email || '',
         linkedin: detail?.linkedIn || '',
       });
     } else if (user?.role === 'student') {
+      const studentPhone = splitPhone(detail?.phone ?? detail?.contactPhone);
       form.setFieldsValue({
         name: user?.name || '',
-        phone: detail?.phone || '',
+        phoneCode: studentPhone.code,
+        phoneNumber: studentPhone.number,
         dateOfBirth: detail?.dateOfBirth ? String(detail.dateOfBirth).substring(0, 10) : '',
         gender: detail?.gender || '',
         bio: detail?.bio || '',
@@ -164,14 +202,14 @@ function ProfileContent() {
           website: values.website as string,
           location: values.location as string,
           description: values.description as string,
-          phone: values.contactPhone as string,
+          contactPhone: `${String(values.contactPhoneCode ?? '+92')}${String(values.contactPhoneNumber ?? '').trim()}`,
           contactEmail: values.contactEmail as string,
           linkedIn: values.linkedin as string,
         });
         setDetail(updated);
       } else if (user?.role === 'student') {
         const updated = await apiUpsertStudentDetail({
-          phone: values.phone as string,
+          phone: `${String(values.phoneCode ?? '+92')}${String(values.phoneNumber ?? '').trim()}`,
           dateOfBirth: values.dateOfBirth as string,
           gender: values.gender as string,
           bio: values.bio as string,
@@ -249,11 +287,11 @@ function ProfileContent() {
               }}
             >
               {/* Gradient Cover */}
-              <div className={`h-32 ${coverGradient} relative`}>
+              <div className={`h-24  relative`}>
                 <Button
                   icon={<EditOutlined />}
                   onClick={openEdit}
-                  className="absolute! top-4! right-4! text-white! border-white/30! bg-white/15!"
+                  className="absolute! top-4! right-4! text-black! text-indigo-500! text-indigo-500!"
                 >
                   Edit Profile
                 </Button>
@@ -300,7 +338,7 @@ function ProfileContent() {
                   <Row gutter={[32, 0]}>
                     <Col xs={24} md={12}>
                       <InfoRow icon={<MailOutlined />} label="Contact Email" value={detail?.contactEmail || user?.email || '—'} />
-                      <InfoRow icon={<PhoneOutlined />} label="Phone" value={detail?.phone || '—'} />
+                      <InfoRow icon={<PhoneOutlined />} label="Phone" value={detail?.contactPhone || '—'} />
                       <InfoRow icon={<EnvironmentOutlined />} label="Location" value={detail?.location || detail?.address || '—'} />
                       <InfoRow icon={<CalendarOutlined />} label="Member Since" value={user?.createdAt ? user.createdAt.substring(0, 10) : '—'} />
                     </Col>
@@ -451,15 +489,35 @@ function ProfileContent() {
                   </Form.Item>
                 </Col>
                 <Col xs={24} sm={12}>
-                  <Form.Item name="contactPhone" label="Phone">
-                    <Input type="tel" prefix={<PhoneOutlined className="text-indigo-500" />} size="large" placeholder="+1 (555) 000-0000" />
+                  <Form.Item label="Phone">
+                    <div className="flex gap-2">
+                      <Form.Item name="contactPhoneCode" noStyle initialValue="+92">
+                        <Select size="large" style={{ width: 120 }} placeholder="Code">
+                          {COUNTRY_CODES.map((code) => (
+                            <Option key={code} value={code}>{code}</Option>
+                          ))}
+                        </Select>
+                      </Form.Item>
+                      <Form.Item name="contactPhoneNumber" noStyle>
+                        <Input type="tel" size="large" placeholder="3000000000" />
+                      </Form.Item>
+                    </div>
                   </Form.Item>
                 </Col>
               </Row>
               <Row gutter={14}>
                 <Col xs={24} sm={12}>
                   <Form.Item name="location" label="Location">
-                    <Input prefix={<EnvironmentOutlined className="text-indigo-500" />} size="large" placeholder="City, Country" />
+                    <Select
+                      size="large"
+                      showSearch
+                      placeholder="Select Pakistan location"
+                      optionFilterProp="children"
+                    >
+                      {PAKISTAN_LOCATIONS.map((location) => (
+                        <Option key={location} value={location}>{location}</Option>
+                      ))}
+                    </Select>
                   </Form.Item>
                 </Col>
                 <Col xs={24} sm={12}>
@@ -485,8 +543,19 @@ function ProfileContent() {
             <>
               <Row gutter={14}>
                 <Col xs={24} sm={12}>
-                  <Form.Item name="phone" label="Phone" rules={[{ required: true, message: 'Required' }]}>
-                    <Input type="tel" prefix={<PhoneOutlined className="text-indigo-500" />} size="large" placeholder="+1 (555) 000-0000" />
+                  <Form.Item label="Phone" required>
+                    <div className="flex gap-2">
+                      <Form.Item name="phoneCode" noStyle initialValue="+92" rules={[{ required: true, message: 'Required' }]}>
+                        <Select size="large" style={{ width: 120 }} placeholder="Code">
+                          {COUNTRY_CODES.map((code) => (
+                            <Option key={code} value={code}>{code}</Option>
+                          ))}
+                        </Select>
+                      </Form.Item>
+                      <Form.Item name="phoneNumber" noStyle rules={[{ required: true, message: 'Required' }]}>
+                        <Input type="tel" size="large" placeholder="3000000000" />
+                      </Form.Item>
+                    </div>
                   </Form.Item>
                 </Col>
                 <Col xs={24} sm={12}>

@@ -9,7 +9,7 @@ export interface CompanyDetailPayload {
   website?: string;
   location: string;
   description: string;
-  phone: string;
+  contactPhone: string;
   contactEmail: string;
   linkedIn?: string;
 }

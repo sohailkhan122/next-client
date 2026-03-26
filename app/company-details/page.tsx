@@ -47,6 +47,23 @@ const COMPANY_SIZES = [
   '1–10', '11–50', '51–200', '201–500', '501–1000', '1001–5000', '5000+',
 ];
 
+const PAKISTAN_LOCATIONS = [
+  'Karachi - Shahrah-e-Faisal',
+  'Karachi - Gulshan-e-Iqbal',
+  'Karachi - DHA',
+  'Lahore - Gulberg',
+  'Lahore - Johar Town',
+  'Islamabad - Blue Area',
+  'Islamabad - G-10',
+  'Rawalpindi - Saddar',
+  'Faisalabad - D Ground',
+  'Peshawar - University Road',
+  'Multan - Cantt',
+  'Hyderabad - Latifabad',
+];
+
+const COUNTRY_CODES = ['+92', '+91', '+880', '+971', '+966', '+974', '+44', '+1', '+61'];
+
 export default function CompanyDetailsPage() {
   const [form] = Form.useForm();
   const router = useRouter();
@@ -84,7 +101,8 @@ export default function CompanyDetailsPage() {
     website?: string;
     location: string;
     description: string;
-    phone: string;
+    phoneCode: string;
+    phoneNumber: string;
     contactEmail: string;
     linkedin?: string;
   }) => {
@@ -98,7 +116,7 @@ export default function CompanyDetailsPage() {
         website: values.website,
         location: values.location,
         description: values.description,
-        phone: values.phone,
+        contactPhone: `${values.phoneCode}${String(values.phoneNumber).trim()}`,
         contactEmail: values.contactEmail,
         linkedIn: values.linkedin,
       });
@@ -239,6 +257,10 @@ export default function CompanyDetailsPage() {
             onFinish={onFinish}
             requiredMark={false}
             size="large"
+            initialValues={{
+              location: 'Karachi - Shahrah-e-Faisal',
+              phoneCode: '+92',
+            }}
             className="space-y-1"
           >
             {/* ─── Company Identity ─────────────────────────────────── */}
@@ -299,7 +321,17 @@ export default function CompanyDetailsPage() {
                   className="flex-1"
                   rules={[{ required: true, message: 'Location is required' }]}
                 >
-                  <Input prefix={<EnvironmentOutlined className="text-slate-400" />} placeholder="e.g. Karachi, Pakistan" className="rounded-xl px-4 py-3" />
+                  <Select
+                    showSearch
+                    placeholder="Select Pakistan location"
+                    optionFilterProp="children"
+                    className="[&_.ant-select-selector]:rounded-xl [&_.ant-select-selector]:py-1.5 [&_.ant-select-selector]:h-auto"
+                    suffixIcon={<EnvironmentOutlined className="text-slate-400" />}
+                  >
+                    {PAKISTAN_LOCATIONS.map((location) => (
+                      <Option key={location} value={location}>{location}</Option>
+                    ))}
+                  </Select>
                 </Form.Item>
               </div>
             </motion.div>
@@ -326,11 +358,32 @@ export default function CompanyDetailsPage() {
               <div className="flex flex-col sm:flex-row sm:gap-4 mt-2">
                 <Form.Item
                   label={<span className="font-medium text-slate-700">Contact Phone</span>}
-                  name="phone"
                   className="flex-1"
-                  rules={[{ required: true, message: 'Contact phone is required' }]}
                 >
-                  <Input prefix={<PhoneOutlined className="text-slate-400" />} placeholder="+92 300 0000000" className="rounded-xl px-4 py-3" />
+                  <div className="flex gap-2">
+                    <Form.Item
+                      name="phoneCode"
+                      noStyle
+                      rules={[{ required: true, message: 'Code required' }]}
+                    >
+                      <Select
+                        style={{ width: 110 }}
+                        className="[&_.ant-select-selector]:rounded-xl [&_.ant-select-selector]:py-1.5 [&_.ant-select-selector]:h-auto"
+                        suffixIcon={<PhoneOutlined className="text-slate-400" />}
+                      >
+                        {COUNTRY_CODES.map((code) => (
+                          <Option key={code} value={code}>{code}</Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                    <Form.Item
+                      name="phoneNumber"
+                      noStyle
+                      rules={[{ required: true, message: 'Contact phone is required' }]}
+                    >
+                      <Input placeholder="3000000000" className="rounded-xl px-4 py-3" />
+                    </Form.Item>
+                  </div>
                 </Form.Item>
 
                 <Form.Item

@@ -333,7 +333,7 @@ export default function CompanyPage() {
 
   const companyName = companyDetail?.companyName || authUser?.company || authUser?.name || '—';
   const companyEmail = companyDetail?.contactEmail || authUser?.email || '—';
-  const phone = companyDetail?.phone || '—';
+  const phone = companyDetail?.contactPhone || '—';
   const joinedDate = authUser?.createdAt ? authUser.createdAt.substring(0, 10) : '—';
 
   return (
@@ -353,11 +353,11 @@ export default function CompanyPage() {
               }}
             >
               {/* Gradient Cover */}
-              <div className="h-32 bg-linear-to-br from-[#1e1b4b] via-[#4338ca] to-[#6366f1]" />
+              <div className="h-24" />
 
               <div className="px-8 pb-7">
                 <div className="flex items-end gap-5 -mt-8 mb-4">
-                  <div className="w-18 h-20 rounded-2xl bg-white border-4 border-white shadow-md flex items-center justify-center text-[30px] text-indigo-500 shrink-0">
+                  <div className="w-18 h-20 rounded-2xl text-indigo-500 border-4 text-indigo-500 shadow-md flex items-center justify-center text-[30px] text-indigo-500 shrink-0">
                     <BankOutlined />
                   </div>
                   <div className="mb-1">
