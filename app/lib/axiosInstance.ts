@@ -57,9 +57,15 @@ axiosInstance.interceptors.response.use(
         {},
         { withCredentials: true, headers: { 'Content-Type': 'application/json' } }
       );
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('auth:refreshed'));
+      }
       processQueue(null);
       return axiosInstance(originalRequest);
     } catch (refreshError) {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('auth:refresh-failed'));
+      }
       processQueue(refreshError);
       if (typeof window !== 'undefined') {
         // window.location.href = '/login';

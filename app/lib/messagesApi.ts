@@ -15,6 +15,7 @@ export interface ChatMessage {
   senderId: string | MessageParticipant;
   content: string;
   isRead: boolean;
+  isEdited?: boolean;
   createdAt: string;
   updatedAt?: string;
   isSending?: boolean;

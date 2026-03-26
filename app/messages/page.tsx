@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import Navbar from '../components/Navbar';
 import { ListSkeleton } from '../components/skeletons';
 import { apiGetMe, type AuthUser } from '../lib/authApi';
-import { initializeSocket, disconnectSocket } from '../lib/messagesSocket';
+import { initializeSocket, disconnectSocket, reconnectSocket } from '../lib/messagesSocket';
 import {
   apiGetConversations,
   type Conversation,
@@ -75,11 +75,8 @@ export default function MessagesPage() {
   useEffect(() => {
     loadConversations();
 
-    const token =
-      typeof window !== 'undefined'
-        ? localStorage.getItem('accessToken') || undefined
-        : undefined;
-    const socket = initializeSocket(token, () => {});
+    let isDisposed = false;
+    let socketRef: ReturnType<typeof initializeSocket> extends Promise<infer S> ? S | null : null = null;
 
     const handleUpdate = (updatedData: any) => {
       setConversations((prev) => {
@@ -99,15 +96,34 @@ export default function MessagesPage() {
       );
     };
 
-    if (socket) {
-      socket.on('conversationUpdated', handleUpdate);
-      socket.on('conversationRead', handleRead);
-    } // Ensure socket exists before attaching
+    const initSocket = async () => {
+      try {
+        const socket = await initializeSocket(undefined, () => {});
+        if (isDisposed) {
+          socket.disconnect();
+          return;
+        }
+        socketRef = socket;
+        socket.on('conversationUpdated', handleUpdate);
+        socket.on('conversationRead', handleRead);
+      } catch {
+        // Ignore socket init failures here; route guards handle auth state.
+      }
+    };
+
+    void initSocket();
+
+    const handleAuthRefresh = () => {
+      reconnectSocket();
+    };
+    window.addEventListener('auth:refreshed', handleAuthRefresh);
 
     return () => {
-      if (socket) {
-        socket.off('conversationUpdated', handleUpdate);
-        socket.off('conversationRead', handleRead);
+      isDisposed = true;
+      window.removeEventListener('auth:refreshed', handleAuthRefresh);
+      if (socketRef) {
+        socketRef.off('conversationUpdated', handleUpdate);
+        socketRef.off('conversationRead', handleRead);
       }
       disconnectSocket();
     };

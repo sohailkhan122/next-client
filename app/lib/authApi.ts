@@ -70,6 +70,50 @@ export async function apiLogout(): Promise<void> {
  */
 export async function apiRefreshToken(): Promise<void> {
   await axiosInstance.post('/auth/refresh');
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('auth:refreshed'));
+  }
+}
+
+export function startAuthKeepAlive(intervalMs = 10 * 60 * 1000): () => void {
+  if (typeof window === 'undefined') {
+    return () => undefined;
+  }
+
+  const refreshIfActive = async () => {
+    if (document.visibilityState !== 'visible' || !navigator.onLine) {
+      return;
+    }
+
+    try {
+      await apiRefreshToken();
+    } catch {
+      // Refresh failures are handled by interceptor + guards.
+    }
+  };
+
+  const intervalId = window.setInterval(() => {
+    void refreshIfActive();
+  }, intervalMs);
+
+  const onVisible = () => {
+    if (document.visibilityState === 'visible') {
+      void refreshIfActive();
+    }
+  };
+
+  const onOnline = () => {
+    void refreshIfActive();
+  };
+
+  document.addEventListener('visibilitychange', onVisible);
+  window.addEventListener('online', onOnline);
+
+  return () => {
+    window.clearInterval(intervalId);
+    document.removeEventListener('visibilitychange', onVisible);
+    window.removeEventListener('online', onOnline);
+  };
 }
 
 /**

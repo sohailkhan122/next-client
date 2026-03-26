@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import { ConfigProvider } from "antd";
 import "./globals.css";
 import AntdRegistry from "./AntdRegistry";
+import AuthKeepAlive from "./components/AuthKeepAlive";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -44,7 +45,8 @@ export default function RootLayout({
             }}
           >
             <div className="relative min-h-screen overflow-x-hidden">
-              <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_right,_rgba(99,102,241,0.14),_transparent_48%),radial-gradient(circle_at_bottom_left,_rgba(14,165,233,0.14),_transparent_44%)]" />
+              <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_right,rgba(99,102,241,0.14),transparent_48%),radial-gradient(circle_at_bottom_left,rgba(14,165,233,0.14),transparent_44%)]" />
+              <AuthKeepAlive />
               <main className="relative z-10 min-h-screen">{children}</main>
             </div>
           </ConfigProvider>

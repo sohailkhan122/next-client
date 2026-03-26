@@ -13,7 +13,7 @@ import { motion } from 'framer-motion';
 import { useRouter, useParams } from 'next/navigation';
 import Navbar from '../../components/Navbar';
 import { apiGetMe, type AuthUser } from '../../lib/authApi';
-import { initializeSocket, disconnectSocket } from '../../lib/messagesSocket';
+import { initializeSocket, disconnectSocket, reconnectSocket } from '../../lib/messagesSocket';
 import {
   apiDeleteMessage,
   apiGetMessages,
@@ -63,6 +63,7 @@ export default function ChatPage() {
 
   useEffect(() => {
     let socketCleanup: (() => void) | null = null;
+    let isDisposed = false;
 
     const init = async () => {
       try {
@@ -80,8 +81,7 @@ export default function ChatPage() {
         setConversation(conv);
         await fetchMessages();
 
-        const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') || undefined : undefined;
-        const socket = initializeSocket(token, (newMessage: ChatMessage) => {
+        const socket = await initializeSocket(undefined, (newMessage: ChatMessage) => {
           if (newMessage.conversationId === conversationId) {
             setMessages((prev) => upsertMessage(prev, newMessage));
             // Mark as read immediately when receiving new message in active chat
@@ -90,6 +90,11 @@ export default function ChatPage() {
             }
           }
         });
+
+        if (isDisposed) {
+          socket.disconnect();
+          return;
+        }
 
         const handleUpdatedMessage = (updatedMessage: ChatMessage) => {
           if (updatedMessage.conversationId === conversationId) {
@@ -141,6 +146,16 @@ export default function ChatPage() {
           socket.off('messagesRead', handleMessagesRead);
         };
 
+        const handleAuthRefresh = () => {
+          reconnectSocket();
+        };
+        window.addEventListener('auth:refreshed', handleAuthRefresh);
+        const previousCleanup = socketCleanup;
+        socketCleanup = () => {
+          window.removeEventListener('auth:refreshed', handleAuthRefresh);
+          previousCleanup();
+        };
+
       } catch {
         router.replace('/login');
         return;
@@ -151,6 +166,7 @@ export default function ChatPage() {
     init();
 
     return () => {
+      isDisposed = true;
       if (socketCleanup) socketCleanup();
       disconnectSocket();
     };
@@ -338,7 +354,7 @@ export default function ChatPage() {
                     {msg.content}
                     <div className="text-[10px] mt-1 opacity-65 text-right">
                       {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      {msg.updatedAt && msg.updatedAt !== msg.createdAt ? ' • edited' : ''}
+                      {msg.isEdited ? ' • edited' : ''}
                     </div>
                   </div>
                 </button>

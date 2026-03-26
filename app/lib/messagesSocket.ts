@@ -1,30 +1,41 @@
 import { io, Socket } from 'socket.io-client';
+import axiosInstance from './axiosInstance';
 
 let socket: Socket | null = null;
+
+const resolveSocketUrl = (): string => {
+  const configuredUrl = (process.env.NEXT_PUBLIC_SOCKET_URL ?? process.env.NEXT_PUBLIC_API_URL ?? '').replace(/\/$/, '');
+
+  if (configuredUrl) {
+    return configuredUrl;
+  }
+
+  if (typeof window !== 'undefined') {
+    return window.location.origin;
+  }
+
+  return 'http://localhost:3001';
+};
 
 export const initializeSocket = <T>(
   token: string | undefined,
   onMessage: (message: T) => void,
 ) => {
+  return (async () => {
   if (socket) {
     socket.disconnect();
   }
-  const configuredUrl = (process.env.NEXT_PUBLIC_API_URL ?? '').replace(/\/$/, '');
+  const url = resolveSocketUrl();
 
-  const url =
-    configuredUrl ||
-    (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3001');
+  let socketToken = token;
 
-  if (!configuredUrl) {
-    console.warn('Socket URL is missing, using fallback URL:', url);
+  if (!socketToken) {
+    const { data } = await axiosInstance.get<{ token: string }>('/auth/socket-token');
+    socketToken = data.token;
   }
 
-  // If token is not provided, try to get from localStorage (sometimes user saves it there)
-  // or rely on cookies (withCredentials: true)
-  const auth = token ? { token } : undefined;
-
   socket = io(url, {
-    auth,
+    auth: { token: socketToken },
     withCredentials: true,
     transports: ['websocket', 'polling'],
     reconnection: true,
@@ -35,6 +46,7 @@ export const initializeSocket = <T>(
   });
 
   return socket;
+  })();
 };
 
 export const getSocket = () => socket;
@@ -43,5 +55,11 @@ export const disconnectSocket = () => {
   if (socket) {
     socket.disconnect();
     socket = null;
+  }
+};
+
+export const reconnectSocket = () => {
+  if (socket && !socket.connected) {
+    socket.connect();
   }
 };
