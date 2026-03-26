@@ -75,6 +75,14 @@ export async function apiRefreshToken(): Promise<void> {
   }
 }
 
+export async function apiRegisterFcmToken(token: string): Promise<void> {
+  await axiosInstance.post('/auth/fcm-token', { token });
+}
+
+export async function apiRemoveFcmToken(token: string): Promise<void> {
+  await axiosInstance.post('/auth/fcm-token/remove', { token });
+}
+
 export function startAuthKeepAlive(intervalMs = 10 * 60 * 1000): () => void {
   if (typeof window === 'undefined') {
     return () => undefined;

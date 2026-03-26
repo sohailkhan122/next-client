@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import Navbar from '../components/Navbar';
 import { ListSkeleton } from '../components/skeletons';
 import { apiGetMe, type AuthUser } from '../lib/authApi';
-import { initializeSocket, disconnectSocket, reconnectSocket } from '../lib/messagesSocket';
+import { initializeSocket, reconnectSocket } from '../lib/messagesSocket';
 import {
   apiGetConversations,
   type Conversation,
@@ -125,7 +125,6 @@ export default function MessagesPage() {
         socketRef.off('conversationUpdated', handleUpdate);
         socketRef.off('conversationRead', handleRead);
       }
-      disconnectSocket();
     };
   }, [loadConversations]);
 

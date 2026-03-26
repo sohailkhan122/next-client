@@ -6,15 +6,69 @@ import { UserOutlined, SolutionOutlined, LogoutOutlined, IdcardOutlined, Message
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { apiLogout, apiGetMe } from '../lib/authApi';
+import { apiGetConversations } from '../lib/messagesApi';
+import { initializeSocket, reconnectSocket } from '../lib/messagesSocket';
 
 export default function Navbar({ title }: { title?: string }) {
   const router = useRouter();
   const [role, setRole] = useState<string | null>(null);
+  const [unreadTotal, setUnreadTotal] = useState<number>(0);
 
   useEffect(() => {
-    apiGetMe()
-      .then((me) => setRole(me.role))
-      .catch(() => setRole(null));
+    let cleanupSocket: (() => void) | null = null;
+    let disposed = false;
+
+    const init = async () => {
+      try {
+        const me = await apiGetMe();
+        if (disposed) return;
+        setRole(me.role);
+
+        if (me.role === 'admin') return;
+
+        try {
+          const conversations = await apiGetConversations();
+          if (!disposed) {
+            const total = conversations.reduce((sum, c) => sum + (c.unreadCount ?? 0), 0);
+            setUnreadTotal(total);
+          }
+        } catch {
+          // Ignore initial unread fetch failures.
+        }
+
+        const socket = await initializeSocket();
+        if (disposed) return;
+
+        const handleUnreadCount = (count: number) => {
+          setUnreadTotal(typeof count === 'number' ? count : 0);
+        };
+
+        socket.on('unreadCountUpdate', handleUnreadCount);
+
+        const handleAuthRefresh = () => {
+          reconnectSocket();
+        };
+
+        window.addEventListener('auth:refreshed', handleAuthRefresh);
+
+        cleanupSocket = () => {
+          socket.off('unreadCountUpdate', handleUnreadCount);
+          window.removeEventListener('auth:refreshed', handleAuthRefresh);
+        };
+      } catch {
+        if (!disposed) {
+          setRole(null);
+          setUnreadTotal(0);
+        }
+      }
+    };
+
+    void init();
+
+    return () => {
+      disposed = true;
+      if (cleanupSocket) cleanupSocket();
+    };
   }, []);
 
   const handleLogout = async () => {
@@ -73,7 +127,7 @@ export default function Navbar({ title }: { title?: string }) {
               onClick={() => router.push('/messages')}
               style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px 8px', borderRadius: 8 }}
             >
-              <Badge dot>
+              <Badge count={unreadTotal} size="small" overflowCount={99}>
                 <MessageOutlined style={{ fontSize: 20, color: '#6366f1' }} />
               </Badge>
             </div>

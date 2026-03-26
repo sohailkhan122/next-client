@@ -2,6 +2,12 @@ import { io, Socket } from 'socket.io-client';
 import axiosInstance from './axiosInstance';
 
 let socket: Socket | null = null;
+const newMessageListeners = new Set<(message: unknown) => void>();
+
+const fetchSocketToken = async (): Promise<string> => {
+  const { data } = await axiosInstance.get<{ token: string }>('/auth/socket-token');
+  return data.token;
+};
 
 const resolveSocketUrl = (): string => {
   const configuredUrl = (process.env.NEXT_PUBLIC_SOCKET_URL ?? process.env.NEXT_PUBLIC_API_URL ?? '').replace(/\/$/, '');
@@ -17,21 +23,33 @@ const resolveSocketUrl = (): string => {
   return 'http://localhost:3001';
 };
 
-export const initializeSocket = <T>(
-  token: string | undefined,
-  onMessage: (message: T) => void,
+export const initializeSocket = async (
+  token?: string,
+  onMessage?: (message: unknown) => void,
 ) => {
-  return (async () => {
-  if (socket) {
-    socket.disconnect();
+  if (onMessage) {
+    newMessageListeners.add(onMessage);
   }
+
+  if (socket) {
+    if (!socket.connected) {
+      try {
+        const refreshedToken = await fetchSocketToken();
+        socket.auth = { ...(socket.auth ?? {}), token: refreshedToken };
+      } catch {
+        // Keep previous auth token and let socket reconnect attempt proceed.
+      }
+      socket.connect();
+    }
+    return socket;
+  }
+
   const url = resolveSocketUrl();
 
   let socketToken = token;
 
   if (!socketToken) {
-    const { data } = await axiosInstance.get<{ token: string }>('/auth/socket-token');
-    socketToken = data.token;
+    socketToken = await fetchSocketToken();
   }
 
   socket = io(url, {
@@ -41,12 +59,25 @@ export const initializeSocket = <T>(
     reconnection: true,
   });
 
-  socket.on('newMessage', (message: T) => {
-    onMessage(message);
+  socket.on('newMessage', (message: unknown) => {
+    newMessageListeners.forEach((listener) => listener(message));
+  });
+
+  socket.on('incomingMessage', (message: unknown) => {
+    newMessageListeners.forEach((listener) => listener(message));
   });
 
   return socket;
-  })();
+};
+
+export const subscribeToIncomingMessages = <T>(
+  callback: (message: T) => void,
+): (() => void) => {
+  const wrappedCallback = callback as (message: unknown) => void;
+  newMessageListeners.add(wrappedCallback);
+  return () => {
+    newMessageListeners.delete(wrappedCallback);
+  };
 };
 
 export const getSocket = () => socket;
@@ -56,10 +87,22 @@ export const disconnectSocket = () => {
     socket.disconnect();
     socket = null;
   }
+  newMessageListeners.clear();
 };
 
 export const reconnectSocket = () => {
-  if (socket && !socket.connected) {
-    socket.connect();
+  if (!socket || socket.connected) {
+    return;
   }
+
+  void fetchSocketToken()
+    .then((token) => {
+      if (!socket) return;
+      socket.auth = { ...(socket.auth ?? {}), token };
+      socket.connect();
+    })
+    .catch(() => {
+      if (!socket) return;
+      socket.connect();
+    });
 };

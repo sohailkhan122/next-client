@@ -13,7 +13,7 @@ import { motion } from 'framer-motion';
 import { useRouter, useParams } from 'next/navigation';
 import Navbar from '../../components/Navbar';
 import { apiGetMe, type AuthUser } from '../../lib/authApi';
-import { initializeSocket, disconnectSocket, reconnectSocket } from '../../lib/messagesSocket';
+import { initializeSocket, reconnectSocket, subscribeToIncomingMessages } from '../../lib/messagesSocket';
 import {
   apiDeleteMessage,
   apiGetMessages,
@@ -81,15 +81,7 @@ export default function ChatPage() {
         setConversation(conv);
         await fetchMessages();
 
-        const socket = await initializeSocket(undefined, (newMessage: ChatMessage) => {
-          if (newMessage.conversationId === conversationId) {
-            setMessages((prev) => upsertMessage(prev, newMessage));
-            // Mark as read immediately when receiving new message in active chat
-            if (socket && socket.connected) {
-               socket.emit('mark_as_read', conversationId);
-            }
-          }
-        });
+        const socket = await initializeSocket();
 
         if (isDisposed) {
           socket.disconnect();
@@ -139,7 +131,17 @@ export default function ChatPage() {
            joinRoom();
         }
 
+        const removeNewMessageListener = subscribeToIncomingMessages<ChatMessage>((newMessage) => {
+          if (newMessage.conversationId === conversationId) {
+            setMessages((prev) => upsertMessage(prev, newMessage));
+            if (socket && socket.connected) {
+              socket.emit('mark_as_read', conversationId);
+            }
+          }
+        });
+
         socketCleanup = () => {
+          removeNewMessageListener();
           socket.off('connect', joinRoom);
           socket.off('messageUpdated', handleUpdatedMessage);
           socket.off('messageDeleted', handleDeletedMessage);
@@ -168,7 +170,6 @@ export default function ChatPage() {
     return () => {
       isDisposed = true;
       if (socketCleanup) socketCleanup();
-      disconnectSocket();
     };
   }, [conversationId, router, fetchMessages, upsertMessage]);
   // Auto-scroll to bottom when messages change
